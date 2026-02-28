@@ -1,0 +1,37 @@
+{
+	"product": {
+		"notFound": "Produit avec l'ID {id} introuvable",
+		"slugNotFound": "Produit avec le slug \"{slug}\" introuvable",
+		"exists": "Un produit avec le slug \"{slug}\" existe déjà",
+		"stockInsufficient": "Stock insuffisant"
+	},
+	"category": {
+		"exists": "Une catégorie avec ce nom existe déjà",
+		"parentNotFound": "Catégorie parente non trouvée",
+		"notFound": "Catégorie avec l'ID {id} introuvable"
+	},
+	"category_update": {
+		"duplicateName": "Une catégorie avec ce nom existe déjà",
+		"selfParent": "Une catégorie ne peut pas être son propre parent"
+	},
+	"auth": {
+		"emailExists": "Cet email est déjà utilisé",
+		"badCredentials": "Email ou mot de passe incorrect",
+		"adminNotFound": "Admin non trouvé"
+	},
+	"cart": {
+		"productUnavailable": "Ce produit n'est plus disponible",
+		"itemNotFound": "Item non trouvé dans le panier",
+		"quantityInsufficient": "Stock insuffisant pour cette quantité"
+	},
+	"order": {
+		"emptyCart": "Le panier est vide",
+		"insufficientStock": "Stock insuffisant pour {productName}",
+		"alreadyCancelled": "La commande est déjà annulée",
+		"cannotCancelCompleted": "Impossible d'annuler une commande terminée"
+	},
+	"order_find": {
+		"notFound": "Commande avec l'ID {id} introuvable",
+		"notFoundByNumber": "Commande {orderNumber} introuvable"
+	}
+}

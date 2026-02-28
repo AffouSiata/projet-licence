@@ -1,0 +1,63 @@
+{
+	"common": {
+		"hello": "Bonjour",
+		"welcome": "Bienvenue",
+		"error": "Erreur",
+		"success": "Succès",
+		"created": "Créé avec succès",
+		"updated": "Mis à jour avec succès",
+		"deleted": "Supprimé avec succès",
+		"notFound": "Non trouvé",
+		"unauthorized": "Non autorisé",
+		"forbidden": "Accès interdit",
+		"badRequest": "Requête invalide"
+	},
+	"validation": {
+		"required": "Ce champ est requis",
+		"email": "Email invalide",
+		"min": "La valeur minimale est {{min}}",
+		"max": "La valeur maximale est {{max}}",
+		"minLength": "La longueur minimale est {{min}} caractères",
+		"maxLength": "La longueur maximale est {{max}} caractères"
+	},
+	"auth": {
+		"login": "Connexion réussie",
+		"logout": "Déconnexion réussie",
+		"register": "Inscription réussie",
+		"invalidCredentials": "Identifiants invalides",
+		"emailExists": "Cet email existe déjà",
+		"tokenExpired": "Token expiré",
+		"tokenInvalid": "Token invalide"
+	},
+	"categories": {
+		"created": "Catégorie créée",
+		"updated": "Catégorie mise à jour",
+		"deleted": "Catégorie supprimée",
+		"notFound": "Catégorie non trouvée",
+		"list": "Liste des catégories"
+	},
+	"products": {
+		"created": "Produit créé",
+		"updated": "Produit mis à jour",
+		"deleted": "Produit supprimé",
+		"notFound": "Produit non trouvé",
+		"list": "Liste des produits",
+		"outOfStock": "Produit en rupture de stock",
+		"insufficientStock": "Stock insuffisant"
+	},
+	"cart": {
+		"added": "Ajouté au panier",
+		"updated": "Panier mis à jour",
+		"removed": "Retiré du panier",
+		"cleared": "Panier vidé",
+		"empty": "Panier vide",
+		"notFound": "Panier non trouvé"
+	},
+	"orders": {
+		"created": "Commande créée",
+		"updated": "Commande mise à jour",
+		"notFound": "Commande non trouvée",
+		"statusUpdated": "Statut de la commande mis à jour",
+		"whatsappRedirect": "Vous allez être redirigé vers WhatsApp"
+	}
+}

@@ -1,0 +1,3 @@
+Créer une interface d’administration (Admin Panel) moderne et professionnelle pour une plateforme e-commerce de vente de licences. Le frontend doit être développé  et connecté à une API existante au format JSON. Le design doit être élégant, doux, attrayant et inspirer confiance. L’interface doit être intuitive, responsive et offrir une excellente expérience utilisateur.
+
+Le menu de l’interface d’administration doit contenir les sections suivantes : Dashboard (vue d’ensemble), Clients, Catégories, Produits, Commandes, Promotions et Notifications. En bas du menu doivent se trouver les options Paramètres et Déconnexion.

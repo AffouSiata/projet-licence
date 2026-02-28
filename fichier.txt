@@ -1,0 +1,23 @@
+Mon projet consiste à développer une plateforme e-commerce dédiée à la vente de licences.
+La partie backend a déjà été réalisée et exposée sous forme d’une API au format JSON.
+
+La phase suivante concerne le développement du frontend en React.js, en s’appuyant sur cette API.
+L’objectif est de proposer une interface moderne, élégante, douce et attrayante, afin d’offrir une expérience utilisateur fluide et professionnelle. Le design doit mettre l’utilisateur en confiance dès son arrivée sur le site et faciliter l’acte d’achat des licences.
+
+En complément de la partie utilisateur, le projet intègre une partie administration (Admin).
+Cette interface permet à l’administrateur de :
+
+gérer les licences (ajout, modification, suppression),
+
+gérer les utilisateurs,
+
+suivre les ventes et les transactions,
+
+assurer le bon fonctionnement global de la plateforme.
+
+La partie administration est conçue de manière sécurisée, avec une interface claire et ergonomique, afin de faciliter la gestion quotidienne du site.   
+
+
+
+
+Impossible de se connecter à l'API. Vérifiez que l'API backend est lancée sur le port 3005.

@@ -1,0 +1,37 @@
+{
+	"product": {
+		"notFound": "Product with ID {id} not found",
+		"slugNotFound": "Product with slug \"{slug}\" not found",
+		"exists": "A product with slug \"{slug}\" already exists",
+		"stockInsufficient": "Insufficient stock"
+	},
+	"category": {
+		"exists": "A category with this name already exists",
+		"parentNotFound": "Parent category not found",
+		"notFound": "Category with ID {id} not found"
+	},
+	"category_update": {
+		"duplicateName": "A category with this name already exists",
+		"selfParent": "A category cannot be its own parent"
+	},
+	"auth": {
+		"emailExists": "This email is already in use",
+		"badCredentials": "Email or password is incorrect",
+		"adminNotFound": "Admin not found"
+	},
+	"cart": {
+		"productUnavailable": "This product is no longer available",
+		"itemNotFound": "Cart item not found",
+		"quantityInsufficient": "Insufficient stock for this quantity"
+	},
+	"order": {
+		"emptyCart": "The cart is empty",
+		"insufficientStock": "Insufficient stock for {productName}",
+		"alreadyCancelled": "The order is already cancelled",
+		"cannotCancelCompleted": "Cannot cancel a completed order"
+	},
+	"order_find": {
+		"notFound": "Order with ID {id} not found",
+		"notFoundByNumber": "Order {orderNumber} not found"
+	}
+}
