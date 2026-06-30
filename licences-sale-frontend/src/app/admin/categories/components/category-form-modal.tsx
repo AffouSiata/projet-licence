@@ -1,8 +1,10 @@
 'use client';
 
+import { Check, ImageIcon, Loader2, Plus, X } from 'lucide-react';
 import { useAction } from 'next-safe-action/hooks';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { compressImage } from '~/lib/compress-image';
 import type { Category } from '~/validators/categories';
 import { createCategoryAction, updateCategoryAction } from '../actions';
 
@@ -106,13 +108,16 @@ export const CategoryFormModal = ({
 
 	const isExecuting = isCreating || isUpdating;
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
+		// Compresse l'image avant l'envoi pour accélérer l'upload
+		const finalImage = image ? await compressImage(image) : image;
+
 		if (isEdit && category) {
-			executeUpdate({ id: category.id, name, description, image });
+			executeUpdate({ id: category.id, name, description, image: finalImage });
 		} else {
-			executeCreate({ name, description, image });
+			executeCreate({ name, description, image: finalImage });
 		}
 	};
 
@@ -125,70 +130,62 @@ export const CategoryFormModal = ({
 	if (!isOpen) return null;
 
 	return (
-		<div
-			className="fixed inset-0 z-50 flex items-center justify-center p-4"
-			onClick={handleClose}
-		>
+		<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 			{/* Backdrop */}
-			<div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" />
+			<button
+				type="button"
+				aria-label="Fermer"
+				onClick={handleClose}
+				className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+			/>
 
 			{/* Modal */}
-			<div
-				className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-scale-in overflow-hidden"
-				onClick={(e) => e.stopPropagation()}
-			>
+			<div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-scale-in overflow-hidden">
 				{/* Header */}
-				<div className="relative px-6 pt-6 pb-4">
-					<div className="flex items-start justify-between">
+				<div className="relative px-6 py-5 bg-gradient-to-r from-[#1D73B3] to-[#2E86AB]">
+					<div className="flex items-start justify-between gap-4">
 						<div>
-							<h2 className="text-xl font-bold text-gray-900">
+							<h2 className="text-xl font-bold text-white">
 								{isEdit ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
 							</h2>
-							<p className="text-sm text-gray-500 mt-1">
+							<p className="text-sm text-white/80 mt-1">
 								{isEdit
 									? 'Mettez à jour les informations de la catégorie'
 									: 'Créez une nouvelle catégorie pour organiser vos produits'}
 							</p>
 						</div>
 						<button
+							type="button"
 							onClick={handleClose}
 							disabled={isExecuting}
-							className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all disabled:opacity-50"
+							className="p-2 text-white/80 hover:text-white hover:bg-white/15 rounded-xl transition-all disabled:opacity-50"
 						>
-							<svg
-								className="w-5 h-5"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M6 18L18 6M6 6l12 12"
-								/>
-							</svg>
+							<X size={20} />
 						</button>
 					</div>
 				</div>
 
-				<form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5">
+				<form onSubmit={handleSubmit} className="px-6 py-6 space-y-5">
 					{/* Image Upload */}
 					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">
-							Image {!isEdit && <span className="text-red-500">*</span>}
+						<label
+							htmlFor="category-image"
+							className="block text-sm font-medium text-gray-700 mb-2"
+						>
+							Image {!isEdit && <span className="text-[#E63946]">*</span>}
 						</label>
-						<div
+						<button
+							type="button"
 							onDragOver={handleDragOver}
 							onDragLeave={handleDragLeave}
 							onDrop={handleDrop}
 							onClick={() => fileInputRef.current?.click()}
-							className={`relative cursor-pointer rounded-xl border-2 border-dashed transition-all overflow-hidden ${
+							className={`relative w-full cursor-pointer rounded-xl border-2 border-dashed transition-all overflow-hidden text-left ${
 								isDragging
-									? 'border-blue-500 bg-blue-50'
+									? 'border-[#1D73B3] bg-[#1D73B3]/5'
 									: imagePreview
-										? 'border-gray-200 bg-gray-50'
-										: 'border-gray-300 bg-gray-50 hover:border-gray-400'
+										? 'border-gray-200 bg-[#F6F8FB]'
+										: 'border-gray-300 bg-[#F6F8FB] hover:border-[#1D73B3]'
 							}`}
 						>
 							{imagePreview ? (
@@ -206,23 +203,11 @@ export const CategoryFormModal = ({
 								</div>
 							) : (
 								<div className="py-8 text-center">
-									<div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-										<svg
-											className="w-6 h-6 text-gray-400"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-											/>
-										</svg>
+									<div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mx-auto mb-3 ring-1 ring-gray-200">
+										<ImageIcon size={24} className="text-gray-400" />
 									</div>
 									<p className="text-sm text-gray-600 mb-1">
-										<span className="text-blue-600 font-medium">
+										<span className="text-[#1D73B3] font-medium">
 											Cliquez pour télécharger
 										</span>{' '}
 										ou glissez-déposez
@@ -232,8 +217,9 @@ export const CategoryFormModal = ({
 									</p>
 								</div>
 							)}
-						</div>
+						</button>
 						<input
+							id="category-image"
 							ref={fileInputRef}
 							type="file"
 							accept="image/*"
@@ -250,7 +236,7 @@ export const CategoryFormModal = ({
 							htmlFor="name"
 							className="block text-sm font-medium text-gray-700 mb-2"
 						>
-							Nom de la catégorie <span className="text-red-500">*</span>
+							Nom de la catégorie <span className="text-[#E63946]">*</span>
 						</label>
 						<input
 							id="name"
@@ -259,7 +245,7 @@ export const CategoryFormModal = ({
 							onChange={(e) => setName(e.target.value)}
 							required
 							disabled={isExecuting}
-							className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+							className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-[#1D73B3] focus:ring-2 focus:ring-[#1D73B3]/20 transition-all outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
 							placeholder="Ex: Logiciels Microsoft"
 						/>
 					</div>
@@ -279,7 +265,7 @@ export const CategoryFormModal = ({
 							disabled={isExecuting}
 							rows={3}
 							maxLength={500}
-							className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none disabled:bg-gray-100 disabled:cursor-not-allowed resize-none"
+							className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-[#1D73B3] focus:ring-2 focus:ring-[#1D73B3]/20 transition-all outline-none disabled:bg-gray-100 disabled:cursor-not-allowed resize-none"
 							placeholder="Décrivez brièvement cette catégorie..."
 						/>
 						<div className="flex items-center justify-between mt-1.5">
@@ -300,53 +286,23 @@ export const CategoryFormModal = ({
 							type="button"
 							onClick={handleClose}
 							disabled={isExecuting}
-							className="flex-1 px-5 py-3 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+							className="flex-1 px-5 py-3 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-[#F6F8FB] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							Annuler
 						</button>
 						<button
 							type="submit"
 							disabled={isExecuting}
-							className="flex-1 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
+							className="flex-1 px-5 py-3 bg-[#1D73B3] text-white rounded-xl font-medium hover:bg-[#1B3A5F] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center justify-center gap-2"
 						>
 							{isExecuting ? (
 								<>
-									<svg
-										className="w-4 h-4 animate-spin"
-										fill="none"
-										viewBox="0 0 24 24"
-									>
-										<circle
-											className="opacity-25"
-											cx="12"
-											cy="12"
-											r="10"
-											stroke="currentColor"
-											strokeWidth="4"
-										/>
-										<path
-											className="opacity-75"
-											fill="currentColor"
-											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-										/>
-									</svg>
+									<Loader2 size={16} className="animate-spin" />
 									<span>En cours...</span>
 								</>
 							) : (
 								<>
-									<svg
-										className="w-4 h-4"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth={2}
-											d={isEdit ? 'M5 13l4 4L19 7' : 'M12 4v16m8-8H4'}
-										/>
-									</svg>
+									{isEdit ? <Check size={16} /> : <Plus size={16} />}
 									<span>{isEdit ? 'Enregistrer' : 'Créer la catégorie'}</span>
 								</>
 							)}

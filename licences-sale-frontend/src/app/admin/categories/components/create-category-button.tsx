@@ -1,5 +1,6 @@
 'use client';
 
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { CategoryFormModal } from './category-form-modal';
 
@@ -9,25 +10,12 @@ export const CreateCategoryButton = () => {
 	return (
 		<>
 			<button
+				type="button"
 				onClick={() => setIsModalOpen(true)}
-				className="group px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 flex items-center gap-2.5 font-medium"
+				className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1D73B3] text-white rounded-xl font-semibold text-sm hover:bg-[#1B3A5F] transition-colors shadow-sm"
 			>
-				<span className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-colors">
-					<svg
-						className="w-4 h-4"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth={2.5}
-							d="M12 4v16m8-8H4"
-						/>
-					</svg>
-				</span>
-				Nouvelle catégorie
+				<Plus size={18} strokeWidth={2.5} />
+				Créer une catégorie
 			</button>
 
 			<CategoryFormModal

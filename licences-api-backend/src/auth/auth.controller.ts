@@ -4,6 +4,7 @@ import {
 	ForbiddenException,
 	Get,
 	Headers,
+	Patch,
 	Post,
 	Query,
 	UseGuards,
@@ -19,7 +20,12 @@ import {
 import { AuthService } from './auth.service';
 import { GetAdmin } from './decorators/get-admin.decorator';
 import { Roles } from './decorators/roles.decorator';
-import { LoginDto, RegisterDto } from './dto/auth.dto';
+import {
+	ChangePasswordDto,
+	LoginDto,
+	RegisterDto,
+	UpdateProfileDto,
+} from './dto/auth.dto';
 import {
 	AdminResponseDto,
 	LoginResponseDto,
@@ -122,6 +128,49 @@ export class AuthController {
 	@ApiResponse({ status: 401, description: 'Non authentifié' })
 	async getMe(@GetAdmin() admin: AdminResponseDto) {
 		return admin;
+	}
+
+	@Patch('profile')
+	@UseGuards(JwtAuthGuard)
+	@ApiBearerAuth('JWT-auth')
+	@ApiOperation({ summary: 'Mettre à jour son profil (nom, email)' })
+	@ApiResponse({
+		status: 200,
+		description: 'Profil mis à jour',
+		type: AdminResponseDto,
+	})
+	@ApiResponse({
+		status: 400,
+		description: 'Email déjà utilisé ou données invalides',
+		type: ValidationErrorDto,
+	})
+	@ApiResponse({ status: 401, description: 'Non authentifié' })
+	async updateProfile(
+		@GetAdmin('id') adminId: string,
+		@Body() dto: UpdateProfileDto,
+	) {
+		return this.authService.updateProfile(adminId, dto);
+	}
+
+	@Patch('password')
+	@UseGuards(JwtAuthGuard)
+	@ApiBearerAuth('JWT-auth')
+	@ApiOperation({ summary: 'Changer son mot de passe' })
+	@ApiResponse({ status: 200, description: 'Mot de passe changé' })
+	@ApiResponse({
+		status: 400,
+		description: 'Validation échouée',
+		type: ValidationErrorDto,
+	})
+	@ApiResponse({
+		status: 401,
+		description: 'Mot de passe actuel incorrect ou non authentifié',
+	})
+	async changePassword(
+		@GetAdmin('id') adminId: string,
+		@Body() dto: ChangePasswordDto,
+	) {
+		return this.authService.changePassword(adminId, dto);
 	}
 
 	@Post('refresh')

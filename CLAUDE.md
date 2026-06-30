@@ -42,12 +42,16 @@ Swagger UI: `http://localhost:3020/api/docs`.
 
 1. A `page.tsx` Server Component fetches initial data via a co-located `lib.ts` (e.g. `app/admin/products/lib.ts`).
 2. Client Components dispatch mutations through Server Actions in `actions.ts`, validated by `next-safe-action` against schemas in `~/validators/`.
-3. Both `lib.ts` and `actions.ts` go through `~/lib/api.ts`, which is the **only** axios instance and the only place that reads the `auth_token` cookie. It auto-attaches `Authorization: Bearer <token>` and converts 401s into a typed `AuthenticationError` — handle that explicitly rather than catching all errors.
+3. Both `lib.ts` and `actions.ts` go through `~/lib/api.ts`, which is the **only** axios instance and the only place that reads the auth cookies. It attaches `Authorization: Bearer <auth_token>` and forwards the `sessionId` cookie (for the guest cart), and converts 401s into a typed `AuthenticationError` — handle that explicitly rather than catching all errors.
 4. Backend controllers receive the JWT, `JwtAuthGuard` resolves the user, services run Prisma queries.
 
-### Two coexisting backends in the frontend
+### Guest vs. authenticated checkout
 
-`src/app/api/*` still contains mock route handlers (with an in-memory `mock-data.ts`) **and** `~/lib/api.ts` already targets the real NestJS API at `NEXT_PUBLIC_API_URL` (default `http://localhost:3020/api`). New work should go through the real API; treat the mock routes as legacy until removed. Do not re-introduce mock-route calls when wiring new pages.
+Checkout works for anonymous and logged-in users alike. `POST /orders` uses `OptionalJwtAuthGuard` (`src/auth/guards/optional-jwt-auth.guard.ts`) — it sets `req.user` when a valid JWT is present and leaves it `null` otherwise instead of rejecting. `orders.service.createFromCart()` takes an optional `userId` and stamps it onto the order (`Order.userId` is a nullable FK to `Admin`, `onDelete: SetNull`), so a logged-in user's order is linked to their account while a guest's is not. Authenticated users fetch their own history via `GET /orders/me` (`JwtAuthGuard` + `ordersService.findByUser`). Use `OptionalJwtAuthGuard` for any endpoint that must serve both guests and members.
+
+### Real API is the only backend; two legacy route handlers remain
+
+`~/lib/api.ts` targets the real NestJS API at `NEXT_PUBLIC_API_URL` (default `http://localhost:3020/api`) — all data work goes through it. The old in-memory mock system (`api/mock-data.ts` and per-resource mock routes) has been removed; only `src/app/api/auth/me/route.ts` and `src/app/api/auth/logout/route.ts` survive as thin legacy handlers. Do not add new route handlers under `src/app/api/*`; wire pages to the real API via a co-located `lib.ts`.
 
 ### Two cookies, two purposes
 
@@ -67,7 +71,7 @@ Three providers are registered globally and apply to every route — do not re-r
 
 ### Prisma conventions
 
-Schema in `licences-api-backend/prisma/schema.prisma`. Models use `@@map("snake_case")`; PKs are uuid strings. **Soft deletes** apply to `Category`, `Product`, and `Order` via a nullable `deletedAt` — every read query that should hide archived rows must filter `where: { deletedAt: null }` manually (Prisma has no global middleware here). `OrderItem.productName` snapshots the name at order time so renaming/deleting products doesn't rewrite history.
+Schema in `licences-api-backend/prisma/schema.prisma`. Seven models: `Admin`, `Category`, `Product`, `Cart`, `CartItem`, `Order`, `OrderItem`. Models use `@@map("snake_case")`; PKs are uuid strings. The `Admin` table backs **every** account regardless of role — the `Role` enum (`SUPER_ADMIN | ADMIN | CLIENT`) lives on it, so storefront customers and admins share one table (this is what `Order.userId` points at). **Soft deletes** apply to `Category`, `Product`, and `Order` via a nullable `deletedAt` — every read query that should hide archived rows must filter `where: { deletedAt: null }` manually (Prisma has no global middleware here). `OrderItem.productName` snapshots the name at order time so renaming/deleting products doesn't rewrite history.
 
 After any schema change: `npx prisma generate`. Do not edit generated files in `node_modules/.prisma/`.
 
@@ -101,5 +105,5 @@ Tabs, single quotes, organize-imports on save. Note the **version skew**: fronte
 ## Testing
 
 - Backend `test-flow.sh` is the canonical end-to-end smoke test — it walks auth, CRUD on categories/products, cart, order creation with WhatsApp URL, authorization, soft delete + restore, and i18n. Run it after any change to controllers or guards. It expects an admin account to exist and the dev server to be running on 3020.
-- Jest unit tests live next to source as `*.spec.ts` under `src/`. E2E tests use `test/jest-e2e.json`.
-- Frontend has no test suite configured.
+- Jest is fully configured but **no `*.spec.ts` files exist yet** — `test-flow.sh` is currently the only real coverage. New unit tests go next to source as `*.spec.ts` under `src/`; E2E tests use `test/jest-e2e.json`.
+- Frontend has no test suite configured (no `test` script in its `package.json`).

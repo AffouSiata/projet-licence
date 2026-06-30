@@ -89,11 +89,11 @@ export const Footer = () => {
 						</h4>
 						<ul className="space-y-3">
 							{[
-								{ label: 'Windows', href: '/products?q=windows' },
-								{ label: 'Microsoft Office', href: '/products?q=office' },
-								{ label: 'Antivirus', href: '/products?q=antivirus' },
-								{ label: 'Adobe', href: '/products?q=adobe' },
-								{ label: 'Autodesk', href: '/products?q=autodesk' },
+								{ label: 'Windows', href: '/categories/systemes-exploitation' },
+								{ label: 'Microsoft Office', href: '/categories/office' },
+								{ label: 'Antivirus', href: '/categories/antivirus' },
+								{ label: 'Adobe', href: '/categories/adobe' },
+								{ label: 'Autodesk', href: '/categories/autodesk' },
 							].map((link) => (
 								<li key={link.href}>
 									<Link

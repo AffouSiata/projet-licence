@@ -1,10 +1,19 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '../prisma/prisma.service';
-import type { LoginDto, RegisterDto } from './dto/auth.dto';
+import type {
+	ChangePasswordDto,
+	LoginDto,
+	RegisterDto,
+	UpdateProfileDto,
+} from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -131,6 +140,57 @@ export class AuthService {
 				role: true,
 			},
 		});
+	}
+
+	async updateProfile(adminId: string, dto: UpdateProfileDto) {
+		// Empêcher de prendre l'email d'un autre compte
+		const existing = await this.prisma.admin.findUnique({
+			where: { email: dto.email },
+		});
+		if (existing && existing.id !== adminId) {
+			throw new BadRequestException(this.i18n.t('errors.auth.emailExists'));
+		}
+
+		return this.prisma.admin.update({
+			where: { id: adminId },
+			data: { name: dto.name, email: dto.email },
+			select: {
+				id: true,
+				email: true,
+				name: true,
+				role: true,
+			},
+		});
+	}
+
+	async changePassword(adminId: string, dto: ChangePasswordDto) {
+		const admin = await this.prisma.admin.findUnique({
+			where: { id: adminId },
+		});
+		if (!admin) {
+			throw new UnauthorizedException(this.i18n.t('errors.auth.adminNotFound'));
+		}
+
+		// Vérifier le mot de passe actuel (400 et non 401 : l'utilisateur est bien
+		// authentifié, c'est la donnée fournie qui est invalide)
+		const matches = await bcrypt.compare(dto.currentPassword, admin.password);
+		if (!matches) {
+			throw new BadRequestException(this.i18n.t('errors.auth.wrongPassword'));
+		}
+
+		// Le nouveau doit être différent de l'ancien
+		const sameAsOld = await bcrypt.compare(dto.newPassword, admin.password);
+		if (sameAsOld) {
+			throw new BadRequestException(this.i18n.t('errors.auth.samePassword'));
+		}
+
+		const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+		await this.prisma.admin.update({
+			where: { id: adminId },
+			data: { password: hashedPassword },
+		});
+
+		return { success: true };
 	}
 
 	async getDashboardStats() {

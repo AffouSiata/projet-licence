@@ -136,7 +136,7 @@ export default function ProductDetailClient({
 						</Link>
 						<ChevronRight size={14} className="text-slate-300" />
 						<Link
-							href="/products"
+							href="/categories"
 							className="text-slate-500 hover:text-[#1D73B3] transition-colors"
 						>
 							Produits
@@ -559,7 +559,7 @@ export default function ProductDetailClient({
 								</h2>
 							</div>
 							<Link
-								href="/products"
+								href="/categories"
 								className="group hidden md:inline-flex items-center gap-2 text-[14px] font-semibold text-slate-700 hover:text-[#1D73B3] transition-colors"
 							>
 								Voir tous les produits

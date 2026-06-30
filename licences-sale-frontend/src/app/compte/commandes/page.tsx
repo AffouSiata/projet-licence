@@ -26,8 +26,7 @@ interface Order {
 
 async function getOrders(): Promise<Order[]> {
 	try {
-		const response = await api.get<{ items: Order[] }>('/orders');
-		return response.items || [];
+		return await api.get<Order[]>('/orders/me');
 	} catch {
 		return [];
 	}

@@ -28,7 +28,7 @@ interface Order {
 
 async function getOrders(): Promise<Order[]> {
 	try {
-		return await api.get<Order[]>('/orders');
+		return await api.get<Order[]>('/orders/me');
 	} catch {
 		return [];
 	}
@@ -191,7 +191,7 @@ export default async function ComptePage() {
 								</Link>
 
 								<Link
-									href="/products"
+									href="/categories"
 									className="bg-gradient-to-br from-[#E63946] to-[#FF6B6B] rounded-2xl p-6 text-white hover:shadow-xl transition-all group"
 								>
 									<div className="flex items-center justify-between mb-4">
@@ -234,7 +234,7 @@ export default async function ComptePage() {
 											Aucune commande pour le moment
 										</p>
 										<Link
-											href="/products"
+											href="/categories"
 											className="inline-block mt-4 px-6 py-2 bg-[#1D70B8] text-white font-semibold rounded-lg hover:bg-[#155a96] transition-all"
 										>
 											Découvrir nos produits

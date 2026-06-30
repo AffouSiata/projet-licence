@@ -24,6 +24,7 @@ export class OrdersService {
 		sessionId: string,
 		data: CreateOrderInput,
 		lang?: string,
+		userId?: string,
 	) {
 		// Récupérer le panier
 		const cart: CartWithItems =
@@ -69,6 +70,7 @@ export class OrdersService {
 				customerEmail: data.customerEmail,
 				customerPhone: data.customerPhone,
 				totalAmount,
+				userId: userId ?? null,
 				metadata: (data.metadata || {}) as Prisma.InputJsonValue,
 				items: {
 					create: cart.items.map((item) => ({
@@ -148,6 +150,29 @@ export class OrdersService {
 
 		return this.prisma.order.findMany({
 			where,
+			include: {
+				items: {
+					include: {
+						product: {
+							select: {
+								id: true,
+								name: true,
+								slug: true,
+							},
+						},
+					},
+				},
+			},
+			orderBy: { createdAt: 'desc' },
+		});
+	}
+
+	/**
+	 * Récupérer les commandes d'un utilisateur connecté
+	 */
+	async findByUser(userId: string) {
+		return this.prisma.order.findMany({
+			where: { userId, deletedAt: null },
 			include: {
 				items: {
 					include: {

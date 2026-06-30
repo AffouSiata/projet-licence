@@ -1,5 +1,6 @@
 'use server';
 
+import axios from 'axios';
 import { redirect } from 'next/navigation';
 import { createSafeActionClient } from 'next-safe-action';
 import { loginApi } from '~/app/auth/login/lib';
@@ -9,13 +10,20 @@ import { loginSchema, registerSchema } from '~/validators/auth';
 
 const action = createSafeActionClient();
 
+// Récupère le message d'erreur renvoyé par l'API (corps { message })
+const apiMessage = (error: unknown): string | undefined => {
+	if (axios.isAxiosError(error)) {
+		const data = error.response?.data as { message?: string } | undefined;
+		return data?.message || error.message;
+	}
+	return undefined;
+};
+
 export const loginAction = action
 	.schema(loginSchema)
 	.action(async ({ parsedInput: { email, password } }) => {
 		try {
-			console.log('🔐 Tentative de connexion pour:', email);
 			const response = await loginApi(email, password);
-			console.log('✅ Réponse API reçue:', response);
 
 			// Stocker le token dans un cookie httpOnly
 			await setSessionToken(response.accessToken);
@@ -24,36 +32,28 @@ export const loginAction = action
 				success: true,
 				user: response.admin,
 			};
-		} catch (error: any) {
-			console.error('❌ Erreur de connexion:', {
-				message: error.message,
-				status: error.response?.status,
-				data: error.response?.data,
-				code: error.code,
-			});
+		} catch (error) {
+			if (axios.isAxiosError(error)) {
+				if (error.response?.status === 401) {
+					return {
+						success: false,
+						error: 'Email ou mot de passe incorrect',
+					};
+				}
 
-			// Gestion des erreurs de l'API
-			if (error.response?.status === 401) {
-				return {
-					success: false,
-					error: 'Email ou mot de passe incorrect',
-				};
-			}
-
-			if (error.code === 'ECONNREFUSED') {
-				return {
-					success: false,
-					error:
-						"Impossible de se connecter à l'API. Vérifiez que l'API backend est lancée sur le port 3005.",
-				};
+				if (error.code === 'ECONNREFUSED') {
+					return {
+						success: false,
+						error:
+							"Impossible de se connecter à l'API. Vérifiez que l'API backend est lancée sur le port 3020.",
+					};
+				}
 			}
 
 			return {
 				success: false,
 				error:
-					error.response?.data?.message ||
-					error.message ||
-					'Une erreur est survenue lors de la connexion',
+					apiMessage(error) || 'Une erreur est survenue lors de la connexion',
 			};
 		}
 	});
@@ -82,27 +82,27 @@ export const registerAction = action
 				success: true,
 				admin: response.admin,
 			};
-		} catch (error: any) {
-			// Gestion des erreurs de l'API
-			if (error.response?.status === 401) {
-				return {
-					success: false,
-					error: 'Email déjà utilisé',
-				};
-			}
+		} catch (error) {
+			if (axios.isAxiosError(error)) {
+				if (error.response?.status === 401) {
+					return {
+						success: false,
+						error: 'Email déjà utilisé',
+					};
+				}
 
-			if (error.response?.status === 400) {
-				return {
-					success: false,
-					error: error.response?.data?.message || 'Données invalides',
-				};
+				if (error.response?.status === 400) {
+					return {
+						success: false,
+						error: apiMessage(error) || 'Données invalides',
+					};
+				}
 			}
 
 			return {
 				success: false,
 				error:
-					error.response?.data?.message ||
-					"Une erreur est survenue lors de l'inscription",
+					apiMessage(error) || "Une erreur est survenue lors de l'inscription",
 			};
 		}
 	});

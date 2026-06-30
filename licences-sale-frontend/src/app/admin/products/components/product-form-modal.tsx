@@ -1,8 +1,10 @@
 'use client';
 
+import { X } from 'lucide-react';
 import { useAction } from 'next-safe-action/hooks';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { compressImage } from '~/lib/compress-image';
 import type { Product } from '~/validators/products';
 import { createProductAction, updateProductAction } from '../actions';
 
@@ -17,6 +19,9 @@ interface ProductFormModalProps {
 	product?: Product;
 	categories: CategoryOption[];
 }
+
+const inputClass =
+	'w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#1D73B3] focus:ring-2 focus:ring-[#1D73B3]/20 transition-all outline-none disabled:bg-gray-100';
 
 export const ProductFormModal = ({
 	isOpen,
@@ -93,8 +98,11 @@ export const ProductFormModal = ({
 
 	const isExecuting = isCreating || isUpdating;
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+
+		// Compresse l'image avant l'envoi pour accélérer l'upload
+		const finalImage = image ? await compressImage(image) : image;
 
 		const data = {
 			name,
@@ -106,7 +114,7 @@ export const ProductFormModal = ({
 			tags,
 			isActive,
 			isFeatured,
-			image,
+			image: finalImage,
 		};
 
 		if (isEdit && product) {
@@ -119,12 +127,28 @@ export const ProductFormModal = ({
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-			<div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
-				<div className="p-6 border-b border-gray-200">
-					<h2 className="text-2xl font-bold text-gray-900">
+		<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+			<button
+				type="button"
+				aria-label="Fermer"
+				onClick={onClose}
+				className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+			/>
+
+			<div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+				<div className="flex items-center justify-between px-6 py-5 bg-gradient-to-r from-[#1D73B3] to-[#2E86AB] text-white">
+					<h2 className="text-xl font-bold tracking-tight">
 						{isEdit ? 'Modifier le produit' : 'Nouveau produit'}
 					</h2>
+					<button
+						type="button"
+						onClick={onClose}
+						disabled={isExecuting}
+						className="p-1.5 rounded-lg text-white/80 hover:bg-white/15 hover:text-white transition-colors disabled:opacity-50"
+						aria-label="Fermer"
+					>
+						<X size={20} />
+					</button>
 				</div>
 
 				<form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -133,7 +157,7 @@ export const ProductFormModal = ({
 							htmlFor="name"
 							className="block text-sm font-medium text-gray-700 mb-2"
 						>
-							Nom du produit <span className="text-red-500">*</span>
+							Nom du produit <span className="text-[#E63946]">*</span>
 						</label>
 						<input
 							id="name"
@@ -142,7 +166,7 @@ export const ProductFormModal = ({
 							onChange={(e) => setName(e.target.value)}
 							required
 							disabled={isExecuting}
-							className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none disabled:bg-gray-100"
+							className={inputClass}
 							placeholder="Ex: Windows 11 Pro"
 						/>
 					</div>
@@ -152,7 +176,7 @@ export const ProductFormModal = ({
 							htmlFor="description"
 							className="block text-sm font-medium text-gray-700 mb-2"
 						>
-							Description <span className="text-red-500">*</span>
+							Description <span className="text-[#E63946]">*</span>
 						</label>
 						<textarea
 							id="description"
@@ -162,10 +186,10 @@ export const ProductFormModal = ({
 							disabled={isExecuting}
 							rows={3}
 							maxLength={2000}
-							className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none disabled:bg-gray-100 resize-none"
+							className={`${inputClass} resize-none`}
 							placeholder="Description du produit..."
 						/>
-						<p className="text-xs text-gray-500 mt-1">
+						<p className="text-xs text-gray-400 mt-1">
 							{description.length}/2000 caractères
 						</p>
 					</div>
@@ -175,7 +199,7 @@ export const ProductFormModal = ({
 							htmlFor="categoryId"
 							className="block text-sm font-medium text-gray-700 mb-2"
 						>
-							Catégorie <span className="text-red-500">*</span>
+							Catégorie <span className="text-[#E63946]">*</span>
 						</label>
 						<select
 							id="categoryId"
@@ -183,7 +207,7 @@ export const ProductFormModal = ({
 							onChange={(e) => setCategoryId(e.target.value)}
 							required
 							disabled={isExecuting}
-							className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none disabled:bg-gray-100"
+							className={inputClass}
 						>
 							<option value="">Sélectionner une catégorie</option>
 							{categories.map((cat) => (
@@ -200,7 +224,7 @@ export const ProductFormModal = ({
 								htmlFor="price"
 								className="block text-sm font-medium text-gray-700 mb-2"
 							>
-								Prix <span className="text-red-500">*</span>
+								Prix <span className="text-[#E63946]">*</span>
 							</label>
 							<input
 								id="price"
@@ -211,7 +235,7 @@ export const ProductFormModal = ({
 								onChange={(e) => setPrice(e.target.value)}
 								required
 								disabled={isExecuting}
-								className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none disabled:bg-gray-100"
+								className={inputClass}
 								placeholder="0.00"
 							/>
 						</div>
@@ -230,7 +254,7 @@ export const ProductFormModal = ({
 								value={discount}
 								onChange={(e) => setDiscount(e.target.value)}
 								disabled={isExecuting}
-								className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none disabled:bg-gray-100"
+								className={inputClass}
 								placeholder="0"
 							/>
 						</div>
@@ -248,7 +272,7 @@ export const ProductFormModal = ({
 								value={stockQuantity}
 								onChange={(e) => setStockQuantity(e.target.value)}
 								disabled={isExecuting}
-								className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none disabled:bg-gray-100"
+								className={inputClass}
 								placeholder="0"
 							/>
 						</div>
@@ -267,7 +291,7 @@ export const ProductFormModal = ({
 							value={tags}
 							onChange={(e) => setTags(e.target.value)}
 							disabled={isExecuting}
-							className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none disabled:bg-gray-100"
+							className={inputClass}
 							placeholder="Ex: windows, licence, professionnel"
 						/>
 					</div>
@@ -277,7 +301,7 @@ export const ProductFormModal = ({
 							htmlFor="image"
 							className="block text-sm font-medium text-gray-700 mb-2"
 						>
-							Image {!isEdit && <span className="text-red-500">*</span>}
+							Image {!isEdit && <span className="text-[#E63946]">*</span>}
 						</label>
 						<input
 							id="image"
@@ -286,10 +310,10 @@ export const ProductFormModal = ({
 							disabled={isExecuting}
 							required={!isEdit}
 							onChange={(e) => setImage(e.target.files?.[0] ?? null)}
-							className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 disabled:opacity-50"
+							className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-[#1D73B3]/10 file:text-[#1D73B3] file:font-semibold hover:file:bg-[#1D73B3]/20 disabled:opacity-50"
 						/>
 						{image?.name && (
-							<p className="text-xs text-gray-500 mt-1">{image.name}</p>
+							<p className="text-xs text-gray-400 mt-1">{image.name}</p>
 						)}
 					</div>
 
@@ -300,7 +324,7 @@ export const ProductFormModal = ({
 								checked={isActive}
 								onChange={(e) => setIsActive(e.target.checked)}
 								disabled={isExecuting}
-								className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+								className="w-4 h-4 rounded border-gray-300 text-[#1D73B3] focus:ring-[#1D73B3]"
 							/>
 							<span className="text-sm text-gray-700">Actif</span>
 						</label>
@@ -310,7 +334,7 @@ export const ProductFormModal = ({
 								checked={isFeatured}
 								onChange={(e) => setIsFeatured(e.target.checked)}
 								disabled={isExecuting}
-								className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+								className="w-4 h-4 rounded border-gray-300 text-[#1D73B3] focus:ring-[#1D73B3]"
 							/>
 							<span className="text-sm text-gray-700">En vedette</span>
 						</label>
@@ -321,14 +345,14 @@ export const ProductFormModal = ({
 							type="button"
 							onClick={onClose}
 							disabled={isExecuting}
-							className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+							className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
 						>
 							Annuler
 						</button>
 						<button
 							type="submit"
 							disabled={isExecuting}
-							className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+							className="flex-1 px-4 py-2.5 bg-[#1D73B3] text-white rounded-xl font-semibold hover:bg-[#2E86AB] transition-colors disabled:opacity-50"
 						>
 							{isExecuting ? 'En cours...' : isEdit ? 'Modifier' : 'Créer'}
 						</button>

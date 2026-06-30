@@ -156,7 +156,7 @@ const AboutPage = () => {
 							{/* CTA Buttons */}
 							<div className="flex flex-wrap gap-4">
 								<Link
-									href="/products"
+									href="/categories"
 									className="px-8 py-4 bg-[#E63946] text-white font-bold rounded-2xl hover:bg-[#D62839] transition-all duration-300 hover:scale-105 shadow-lg shadow-[#E63946]/30"
 								>
 									Découvrir nos produits

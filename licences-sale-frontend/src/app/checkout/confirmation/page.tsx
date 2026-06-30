@@ -236,7 +236,7 @@ export default function ConfirmationPage() {
 								</button>
 
 								<Link
-									href="/products"
+									href="/"
 									className="flex items-center gap-3 p-3 bg-white border-2 border-gray-200 hover:border-[#FF6600] text-gray-700 hover:text-[#FF6600] rounded-xl font-medium transition-all"
 								>
 									<ShoppingBag size={18} />

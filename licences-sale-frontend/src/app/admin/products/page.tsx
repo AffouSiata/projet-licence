@@ -22,29 +22,25 @@ const ProductsPage = async () => {
 
 	return (
 		<div className="p-8">
-			<div className="flex items-center justify-between mb-8">
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
 				<div>
-					<h1 className="text-3xl font-bold text-gray-900">Produits</h1>
-					<p className="text-gray-600 mt-2">
+					<p className="text-gray-500">
 						Gérez votre catalogue de licences
+						{productsList ? (
+							<span className="ml-2 inline-flex items-center rounded-full bg-[#1D73B3]/10 px-2.5 py-0.5 text-xs font-semibold text-[#1D73B3] align-middle">
+								{productsList.total} produit
+								{productsList.total > 1 ? 's' : ''}
+							</span>
+						) : null}
 					</p>
 				</div>
 				<CreateProductButton categories={categories} />
 			</div>
 
 			{productsList ? (
-				<>
-					<div className="mb-4 text-sm text-gray-600">
-						{productsList.total} produit
-						{productsList.total > 1 ? 's' : ''} au total
-					</div>
-					<ProductsTable
-						products={productsList.items}
-						categories={categories}
-					/>
-				</>
+				<ProductsTable products={productsList.items} categories={categories} />
 			) : (
-				<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12">
+				<div className="bg-white rounded-2xl ring-1 ring-gray-200/70 shadow-sm p-12">
 					<div className="text-center text-gray-500">
 						<p>Erreur lors du chargement des produits</p>
 					</div>

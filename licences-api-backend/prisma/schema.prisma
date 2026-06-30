@@ -17,6 +17,7 @@ model Admin {
   name      String
   role      Role     @default(ADMIN)
   isActive  Boolean  @default(true)
+  orders    Order[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -120,12 +121,15 @@ model Order {
   whatsappUrl   String?
   items         OrderItem[]
   metadata      Json?
+  userId        String?     // Null pour les guest checkouts
+  user          Admin?      @relation(fields: [userId], references: [id], onDelete: SetNull)
   deletedAt     DateTime?   // Soft delete (archivage)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
   @@index([orderNumber])
   @@index([status])
+  @@index([userId])
   @@map("orders")
 }
 

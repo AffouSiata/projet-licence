@@ -1,19 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
 import {
-	Shield,
+	AlertCircle,
+	Check,
 	ChevronLeft,
-	Lock,
 	Eye,
 	EyeOff,
-	Check,
-	AlertCircle,
 	Key,
+	Lock,
+	Shield,
 } from 'lucide-react';
-import { Header } from '~/components/header';
+import Link from 'next/link';
+import { useState } from 'react';
 import { Footer } from '~/components/footer';
+import { Header } from '~/components/header';
+import { changePasswordAction } from './actions';
 
 export default function SecuritePage() {
 	const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -81,18 +82,24 @@ export default function SecuritePage() {
 
 		setIsSubmitting(true);
 
-		// Simuler un appel API
-		await new Promise((resolve) => setTimeout(resolve, 1500));
-
-		setIsSubmitting(false);
-		setSuccess(true);
-		setFormData({
-			currentPassword: '',
-			newPassword: '',
-			confirmPassword: '',
+		const result = await changePasswordAction({
+			currentPassword: formData.currentPassword,
+			newPassword: formData.newPassword,
 		});
 
-		setTimeout(() => setSuccess(false), 5000);
+		setIsSubmitting(false);
+
+		if (result.success) {
+			setSuccess(true);
+			setFormData({
+				currentPassword: '',
+				newPassword: '',
+				confirmPassword: '',
+			});
+			setTimeout(() => setSuccess(false), 5000);
+		} else {
+			setError(result.error || 'Erreur lors du changement de mot de passe');
+		}
 	};
 
 	const getPasswordStrength = (password: string) => {
@@ -113,7 +120,13 @@ export default function SecuritePage() {
 		'bg-lime-500',
 		'bg-green-500',
 	];
-	const strengthLabels = ['Très faible', 'Faible', 'Moyen', 'Fort', 'Très fort'];
+	const strengthLabels = [
+		'Très faible',
+		'Faible',
+		'Moyen',
+		'Fort',
+		'Très fort',
+	];
 
 	return (
 		<>
@@ -277,7 +290,8 @@ export default function SecuritePage() {
 											<p
 												className={`text-xs font-semibold ${passwordStrength >= 3 ? 'text-green-600' : passwordStrength >= 2 ? 'text-yellow-600' : 'text-red-600'}`}
 											>
-												Force : {strengthLabels[passwordStrength - 1] || 'Très faible'}
+												Force :{' '}
+												{strengthLabels[passwordStrength - 1] || 'Très faible'}
 											</p>
 										</div>
 									)}

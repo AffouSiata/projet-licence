@@ -1,0 +1,423 @@
+==============================================================================
+                CAHIER DES CHARGES - PLATEFORME LICENCES SALE
+            Plateforme e-commerce de vente de licences logicielles
+==============================================================================
+
+Version : 1.0
+Date    : 2026-05-22
+Auteur  : AffouSiata
+
+
+------------------------------------------------------------------------------
+1. PRESENTATION DU PROJET
+------------------------------------------------------------------------------
+
+1.1. Contexte
+-------------
+Le projet consiste a developper une plateforme e-commerce dediee a la vente
+de licences logicielles (Microsoft Office, Windows, antivirus, Adobe,
+Autodesk, Windows Server, etc.).
+
+La plateforme se compose de deux applications distinctes deployees de maniere
+independante :
+
+  - Une API REST (backend) qui expose les donnees et la logique metier ;
+  - Une application web (frontend) qui propose un site marchand grand public
+    ainsi qu'un panneau d'administration.
+
+1.2. Enjeux
+-----------
+  - Offrir un canal de vente en ligne professionnel et rassurant ;
+  - Permettre une finalisation rapide de l'achat via WhatsApp (paiement et
+    livraison de la cle de licence se font hors-plateforme) ;
+  - Donner a l'administrateur un outil simple pour gerer le catalogue, les
+    commandes, les clients et les promotions ;
+  - Garantir la securite des donnees et des sessions.
+
+
+------------------------------------------------------------------------------
+2. OBJECTIFS
+------------------------------------------------------------------------------
+
+2.1. Objectifs fonctionnels
+---------------------------
+  - Mettre a disposition un catalogue navigable de licences classees par
+    categorie (Office, Antivirus, Adobe, Autodesk, Systemes d'exploitation,
+    Windows Server, etc.) ;
+  - Permettre au visiteur (avec ou sans compte) de constituer un panier et
+    de declencher une commande ;
+  - Generer automatiquement un lien WhatsApp pre-rempli vers le commerçant
+    pour finaliser la transaction ;
+  - Offrir aux clients connectes un espace personnel (commandes, licences,
+    favoris, profil, securite) ;
+  - Permettre a l'administrateur de gerer l'ensemble du catalogue et du
+    cycle de vie des commandes via un back-office dedie.
+
+2.2. Objectifs non fonctionnels
+-------------------------------
+  - Design moderne, doux, professionnel, inspirant confiance ;
+  - Interface entierement responsive (mobile, tablette, desktop) ;
+  - Site multilingue (FR par defaut, EN supporte cote API) ;
+  - Bonnes performances en navigation (rendu serveur Next.js) ;
+  - Conformite aux pages legales obligatoires (CGV, mentions legales,
+    politique de confidentialite).
+
+
+------------------------------------------------------------------------------
+3. PUBLIC CIBLE ET ROLES
+------------------------------------------------------------------------------
+
+Trois roles sont definis dans le systeme :
+
+  - CLIENT       : utilisateur final, peut creer un compte, consulter son
+                   historique de commandes et ses favoris.
+  - ADMIN        : gere le catalogue, les commandes et les clients.
+  - SUPER_ADMIN  : meme droits que ADMIN + gestion des autres
+                   administrateurs et acces aux parametres sensibles.
+
+Cas particulier : un visiteur peut commander SANS creer de compte (guest
+checkout). S'il est connecte au moment de la commande, celle-ci est
+automatiquement liee a son compte (champ Order.userId).
+
+
+------------------------------------------------------------------------------
+4. PERIMETRE FONCTIONNEL - FRONT OFFICE (SITE PUBLIC)
+------------------------------------------------------------------------------
+
+4.1. Pages publiques
+--------------------
+  - Page d'accueil  : hero slider, categories, produits mis en avant,
+                      avantages, temoignages, CTA newsletter.
+  - Catalogue par categorie (/categories/<slug>) : Office, Antivirus, Adobe,
+                      Autodesk, Systemes d'exploitation, Windows Server.
+  - Fiche produit (/products/<slug>) : visuels, description, prix, remise,
+                      stock, bouton ajout panier, ajout favoris.
+  - Recherche (/recherche)            : recherche globale sur le catalogue.
+  - Panier (/cart)                    : modification quantites, suppression
+                                        d'articles, total mis a jour.
+  - Tunnel de commande (/checkout)    : formulaire client (nom, email
+                                        optionnel, telephone), validation,
+                                        generation du lien WhatsApp.
+  - Confirmation (/checkout/confirmation) : recapitulatif + bouton WhatsApp.
+  - Pages institutionnelles : /about, /contact, /faq, /cgv,
+                              /mentions-legales, /politique-confidentialite.
+
+4.2. Authentification client
+----------------------------
+  - Inscription (/auth/register)        : email, mot de passe, nom.
+  - Connexion (/auth/login)             : email + mot de passe, retour JWT.
+  - Deconnexion                         : suppression du cookie auth_token.
+
+4.3. Espace client (/compte)
+----------------------------
+  Accessible uniquement aux utilisateurs connectes :
+  - /compte                : tableau de bord.
+  - /compte/commandes      : historique des commandes du client.
+  - /compte/licences       : licences achetees.
+  - /compte/favoris        : produits mis en favoris.
+  - /compte/profil         : modification des informations personnelles.
+  - /compte/securite       : changement de mot de passe.
+
+
+------------------------------------------------------------------------------
+5. PERIMETRE FONCTIONNEL - BACK OFFICE (PANNEAU ADMIN)
+------------------------------------------------------------------------------
+
+Acces protege par requireAdmin() au niveau du layout admin. Toute personne
+non authentifiee ou n'ayant pas le role ADMIN/SUPER_ADMIN est redirigee.
+
+5.1. Dashboard (/admin)
+-----------------------
+  - Vue d'ensemble : nombre de commandes, chiffre d'affaires, produits
+    actifs, clients enregistres ;
+  - Indicateurs cles et activite recente.
+
+5.2. Categories (/admin/categories)
+-----------------------------------
+  - Liste avec filtres et tri ;
+  - Creation/edition/archivage (soft delete) d'une categorie ;
+  - Categories hierarchiques (parent/enfants) ;
+  - Champs : nom, slug (genere), description, image, ordre, statut actif.
+
+5.3. Produits (/admin/products)
+-------------------------------
+  - Liste paginee avec recherche, filtres par categorie et statut ;
+  - Creation/edition/archivage d'un produit ;
+  - Upload d'images (image principale + galerie) via UploadThing ;
+  - Champs : nom, slug, description longue/courte, prix, remise %,
+    stock, tags, categorie, image principale, images supplementaires,
+    actif, mis en avant.
+
+5.4. Commandes (/admin/orders)
+------------------------------
+  - Liste de toutes les commandes ;
+  - Filtres par statut, recherche par numero de commande ou client ;
+  - Detail d'une commande : produits, montant total, client (guest ou
+    compte lie), lien WhatsApp ;
+  - Changement de statut : PENDING -> CONFIRMED -> PROCESSING ->
+    COMPLETED, ou CANCELLED ;
+  - Archivage (soft delete) d'une commande.
+
+5.5. Clients (/admin/clients)
+-----------------------------
+  - Liste des comptes clients ;
+  - Detail : informations, historique de commandes ;
+  - Activation/desactivation d'un compte.
+
+5.6. Promotions (/admin/promotions)
+-----------------------------------
+  - Gestion des remises et codes promotionnels ;
+  - Mise en avant de produits.
+
+5.7. Notifications (/admin/notifications)
+-----------------------------------------
+  - Centre de notifications administratives (nouvelles commandes, stock
+    faible, etc.).
+
+5.8. Parametres (/admin/settings)
+---------------------------------
+  - Reglages globaux de la plateforme ;
+  - Gestion des autres administrateurs (reserve SUPER_ADMIN).
+
+
+------------------------------------------------------------------------------
+6. PARCOURS UTILISATEUR (USER FLOW)
+------------------------------------------------------------------------------
+
+6.1. Parcours d'achat invite (guest checkout)
+---------------------------------------------
+  1. Le visiteur arrive sur la page d'accueil.
+  2. Il navigue dans le catalogue ou recherche un produit.
+  3. Il consulte la fiche produit et clique sur "Ajouter au panier".
+     Le backend cree un Cart lie a un cookie sessionId (7 jours).
+  4. Il accede au panier, ajuste les quantites si besoin.
+  5. Il clique sur "Commander" et arrive sur /checkout.
+  6. Il renseigne nom, telephone, email (optionnel).
+  7. Validation : la Server Action createOrderAction appelle POST /orders.
+     Le backend cree la commande, genere un orderNumber et un whatsappUrl
+     pre-rempli avec le recapitulatif.
+  8. Redirection vers /checkout/confirmation avec bouton "Continuer sur
+     WhatsApp".
+  9. Le client finalise le paiement et recoit sa licence directement par
+     WhatsApp avec le commercant.
+
+6.2. Parcours d'achat client connecte
+-------------------------------------
+  Identique au parcours invite, avec ces differences :
+  - Les informations du formulaire de checkout peuvent etre pre-remplies.
+  - La commande est automatiquement liee au compte (Order.userId).
+  - Le client retrouve sa commande dans /compte/commandes.
+
+6.3. Parcours administrateur
+----------------------------
+  1. Connexion via /auth/login avec un compte ADMIN ou SUPER_ADMIN.
+  2. Redirection vers /admin (layout protege par requireAdmin()).
+  3. Gestion quotidienne :
+     - reception d'une nouvelle commande -> consultation -> changement de
+       statut une fois la transaction WhatsApp validee ;
+     - mise a jour du catalogue (ajout produit, remise, retrait du stock) ;
+     - suivi des clients et reponse aux questions.
+
+
+------------------------------------------------------------------------------
+7. SPECIFICATIONS TECHNIQUES
+------------------------------------------------------------------------------
+
+7.1. Architecture generale
+--------------------------
+  - Architecture decouplee frontend / backend, communication via API REST
+    JSON.
+  - Frontend deployable independamment (build standalone Next.js).
+  - Base de donnees PostgreSQL.
+
+7.2. Stack backend (licences-api-backend/)
+------------------------------------------
+  - Framework      : NestJS 11
+  - Runtime        : Node.js (lance via bun)
+  - Langage        : TypeScript (strict)
+  - ORM            : Prisma 7 (adapter PostgreSQL)
+  - Validation     : Zod via nestjs-zod (pipe global ZodValidationPipe)
+  - Authentification : JWT (passport-jwt) + bcrypt
+  - Sessions       : express-session (cookie sessionId, 7 jours)
+  - i18n           : nestjs-i18n (FR par defaut, EN supporte ; resolveurs
+                     query ?lang, header x-lang, Accept-Language)
+  - Documentation  : Swagger UI a /api/docs
+  - Upload fichiers: UploadThing
+  - Tests          : Jest (unitaires *.spec.ts + e2e + script test-flow.sh)
+  - Port           : 3020
+
+  Modules : auth, categories, products, cart, orders, upload, health,
+            prisma, common (filters, interceptors, pipes), config, i18n.
+
+7.3. Stack frontend (licences-sale-frontend/)
+---------------------------------------------
+  - Framework      : Next.js 16 (App Router)
+  - UI / Style     : React 19, Tailwind CSS v4
+  - Langage        : TypeScript (strict)
+  - Server Actions : next-safe-action
+  - Validation     : Zod
+  - State URL      : nuqs
+  - Dates          : date-fns
+  - Notifications  : sonner
+  - HTTP client    : axios (instance unique ~/lib/api.ts)
+  - Icones         : lucide-react
+  - Qualite        : Biome (formatter + linter)
+  - Port           : 3000
+  - Build          : output 'standalone' (deploiement Docker friendly)
+
+7.4. Modele de donnees principal (Prisma)
+-----------------------------------------
+  - Admin          : id, email (unique), password (bcrypt), name, role,
+                     isActive, relation orders[].
+  - Category       : id, name, slug (unique), description, image, isActive,
+                     order, parent/children, deletedAt (soft delete).
+  - Product        : id, name, slug (unique), description, shortDesc, price,
+                     discount %, image, images[], stockQuantity, isActive,
+                     isFeatured, tags[], categoryId, deletedAt.
+  - Cart           : id, sessionId (unique), items[], expiresAt.
+  - CartItem       : cartId, productId, quantity, price.
+  - Order          : id, orderNumber (unique), customerName, customerEmail,
+                     customerPhone, totalAmount, status, whatsappUrl,
+                     metadata, userId (nullable - guest ou client connecte),
+                     deletedAt.
+  - OrderItem      : orderId, productId, productName (snapshot au moment
+                     de la commande), quantity, price.
+  - Enums          : Role (SUPER_ADMIN | ADMIN | CLIENT),
+                     OrderStatus (PENDING | CONFIRMED | PROCESSING |
+                                  COMPLETED | CANCELLED).
+
+  Convention : tous les PK sont des UUID. Les modeles Category, Product et
+  Order utilisent un soft delete via le champ nullable deletedAt -- toute
+  lecture qui doit cacher les archives doit ajouter explicitement
+  where: { deletedAt: null }.
+
+7.5. Securite et sessions
+-------------------------
+  Deux cookies coexistent sur la plateforme, avec des roles distincts :
+
+  - auth_token (frontend) : JWT, httpOnly, sameSite=lax, 8 jours.
+    Pose par setSessionToken() apres login. Valide par getSession() qui
+    appelle GET /auth/me. requireAdmin() protege /admin/*.
+
+  - sessionId (backend)   : cookie express-session, httpOnly, 7 jours.
+    Sert d'identifiant anonyme pour le panier (Cart.sessionId).
+
+  Regles :
+  - Mot de passe hashe avec bcrypt cote backend.
+  - Aucun token stocke en localStorage ou sessionStorage.
+  - Le checkout est protege par OptionalJwtAuthGuard : il accepte les
+    visiteurs anonymes ET les clients connectes ; si un JWT est present,
+    la commande est liee au userId.
+  - Les autres routes sensibles (compte, admin) utilisent JwtAuthGuard +
+    RolesGuard.
+
+7.6. Internationalisation
+-------------------------
+  - Les chaines exposees par l'API sont traduites via nestjs-i18n.
+  - Les fichiers de traduction sont dans src/i18n/fr/*.json et
+    src/i18n/en/*.json (FR par defaut, fallback FR si cle manquante).
+  - Toute nouvelle cle doit etre ajoutee dans LES DEUX langues.
+
+7.7. Variables d'environnement
+------------------------------
+  Frontend :
+    - NEXT_PUBLIC_API_URL  : URL de l'API (defaut http://localhost:3020/api).
+
+  Backend :
+    - DATABASE_URL         : chaine de connexion PostgreSQL.
+    - JWT_SECRET           : secret de signature JWT (OBLIGATOIRE en prod).
+    - NODE_ENV             : development | production.
+    - FRONTEND_URL         : URL du front (utilisee pour CORS).
+    - PORT                 : port d'ecoute API (defaut 3020).
+    - WHATSAPP_PHONE       : numero WhatsApp du commerçant pour le lien
+                             pre-rempli a la commande.
+    - UPLOADTHING_TOKEN    : token UploadThing pour les images produits.
+
+
+------------------------------------------------------------------------------
+8. CONTRAINTES ET REGLES DE DEVELOPPEMENT
+------------------------------------------------------------------------------
+
+  - Gestionnaire de paquets : bun uniquement (jamais npm/yarn).
+  - Nommage de fichiers     : kebab-case partout (cote frontend).
+  - Composants React        : arrow functions uniquement.
+  - Pas de React Context pour l'etat global, sauf exceptions documentees
+    (CartProvider et FavoritesProvider deja en place).
+  - Pages Next.js           : Server Components par defaut, "use client"
+                              uniquement si interactivite necessaire.
+  - Validation              : tous les schemas dans ~/validators/ cote
+                              front, dans <module>/dto/ cote back.
+  - HTTP                    : une seule instance axios (~/lib/api.ts) qui
+                              attache automatiquement Bearer + sessionId.
+  - Convention dossier route: page.tsx, actions.ts, lib.ts,
+                              search/params.tsx (nuqs), components/ pour
+                              les composants de cette route.
+  - Style code              : tabs, single quotes, organize-imports on save
+                              (Biome).
+  - Apres modification du schema Prisma : npx prisma generate ; ne jamais
+    editer le client genere dans node_modules/.prisma/.
+
+
+------------------------------------------------------------------------------
+9. EXIGENCES NON FONCTIONNELLES
+------------------------------------------------------------------------------
+
+  - Responsive : mobile, tablette, desktop (Tailwind CSS).
+  - Accessibilite : contrastes lisibles, navigation clavier, attributs
+    ARIA sur composants interactifs.
+  - SEO : metadonnees correctes sur les pages publiques, slugs propres.
+  - Performance : utilisation des Server Components pour le rendu initial,
+    images via next/image (domains autorises : images.unsplash.com et
+    utfs.io).
+  - Documentation API : Swagger UI a jour a /api/docs.
+  - Logs : intercepteur global LoggingInterceptor cote API ; toutes les
+    erreurs HTTP centralisees dans AllExceptionsFilter.
+
+
+------------------------------------------------------------------------------
+10. LIVRABLES
+------------------------------------------------------------------------------
+
+  - Code source de l'API NestJS (licences-api-backend/).
+  - Code source du frontend Next.js (licences-sale-frontend/).
+  - Schema Prisma + migrations versionnees (prisma/migrations/).
+  - Documentation Swagger generee dynamiquement.
+  - Fichier CLAUDE.md a la racine (guide pour les contributeurs / IA).
+  - Script test-flow.sh : smoke test HTTP de bout en bout couvrant auth,
+    CRUD categories/produits, panier, commande, autorisations et soft
+    deletes.
+
+
+------------------------------------------------------------------------------
+11. ENVIRONNEMENTS
+------------------------------------------------------------------------------
+
+  - Developpement local
+      Backend  : bun run start:dev      (port 3020)
+      Frontend : bun dev                (port 3000)
+      DB       : PostgreSQL local
+
+  - Production
+      Backend  : bun run build && bun run start:prod
+                 + npx prisma migrate deploy avant deploiement
+      Frontend : next build (output standalone), deploiement
+                 conteneurise possible.
+
+
+------------------------------------------------------------------------------
+12. HORS PERIMETRE
+------------------------------------------------------------------------------
+
+Pour la version actuelle, les elements suivants ne font PAS partie du
+perimetre fonctionnel et sont assures hors-plateforme :
+
+  - Le paiement en ligne (pas de Stripe / PayPal / Mobile Money integre) :
+    la transaction se finalise par discussion WhatsApp avec le commerçant.
+  - La livraison automatique des cles de licence par email : la cle est
+    transmise manuellement par le commerçant via WhatsApp.
+  - L'envoi de notifications par email (pas de SMTP configure).
+
+
+==============================================================================
+                            FIN DU CAHIER DES CHARGES
+==============================================================================

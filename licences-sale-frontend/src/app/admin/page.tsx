@@ -1,16 +1,13 @@
+import { Package, ShoppingCart, Users, Wallet } from 'lucide-react';
+import { AuthenticationError } from '~/lib/api';
 import { RecentOrdersTable } from './components/recent-orders-table';
 import { type DashboardStats, fetchDashboardStatsApi } from './lib';
-import { AuthenticationError } from '~/lib/api';
 
 const formatRevenue = (revenue: number | string) => {
 	const num =
 		typeof revenue === 'string' ? Number.parseFloat(revenue) : revenue;
-	if (num >= 1000000) {
-		return `${(num / 1000000).toFixed(1)}M`;
-	}
-	if (num >= 1000) {
-		return `${(num / 1000).toFixed(1)}k`;
-	}
+	if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+	if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
 	return num.toFixed(0);
 };
 
@@ -20,137 +17,103 @@ const AdminPage = async () => {
 	try {
 		stats = await fetchDashboardStatsApi();
 	} catch (error) {
-		// Ne pas logger les erreurs d'authentification - la redirection est gérée par le layout
 		if (!(error instanceof AuthenticationError)) {
 			console.error('Erreur chargement dashboard:', error);
 		}
 	}
 
+	const cards = [
+		{
+			label: 'Clients',
+			value: stats?.totalClients ?? '—',
+			icon: Users,
+			tint: 'text-[#1D73B3]',
+			bg: 'bg-[#1D73B3]/10',
+			bar: 'bg-[#1D73B3]',
+		},
+		{
+			label: 'Produits',
+			value: stats?.totalProducts ?? '—',
+			icon: Package,
+			tint: 'text-[#0891B2]',
+			bg: 'bg-[#0891B2]/10',
+			bar: 'bg-[#0891B2]',
+		},
+		{
+			label: 'Commandes',
+			value: stats?.totalOrders ?? '—',
+			icon: ShoppingCart,
+			tint: 'text-[#059669]',
+			bg: 'bg-[#059669]/10',
+			bar: 'bg-[#059669]',
+		},
+		{
+			label: "Chiffre d'affaires",
+			value: stats ? `${formatRevenue(stats.totalRevenue)} FCFA` : '—',
+			icon: Wallet,
+			tint: 'text-[#D97706]',
+			bg: 'bg-[#D97706]/10',
+			bar: 'bg-[#D97706]',
+		},
+	];
+
 	return (
 		<div className="p-8">
 			<div className="mb-8">
-				<h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-				<p className="text-gray-600 mt-2">Vue d'ensemble de votre plateforme</p>
+				<h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+					Bonjour 👋
+				</h1>
+				<p className="text-gray-500 mt-1">
+					Voici un aperçu de l'activité de votre plateforme.
+				</p>
 			</div>
 
 			{/* Statistiques principales */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-				<div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="text-sm text-gray-600 mb-1">Clients</p>
-							<p className="text-2xl font-bold text-gray-900">
-								{stats?.totalClients ?? '—'}
-							</p>
+				{cards.map((card) => {
+					const Icon = card.icon;
+					return (
+						<div
+							key={card.label}
+							className="group relative bg-white rounded-2xl ring-1 ring-gray-200/70 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all overflow-hidden p-6"
+						>
+							<span
+								className={`absolute inset-x-0 top-0 h-1 ${card.bar} opacity-80`}
+							/>
+							<div className="flex items-start justify-between">
+								<div>
+									<p className="text-sm text-gray-500 mb-2">{card.label}</p>
+									<p className="text-3xl font-bold text-gray-900 tracking-tight">
+										{card.value}
+									</p>
+								</div>
+								<div
+									className={`w-12 h-12 rounded-xl ${card.bg} flex items-center justify-center`}
+								>
+									<Icon size={24} className={card.tint} />
+								</div>
+							</div>
 						</div>
-						<div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-							<svg
-								className="w-6 h-6 text-blue-600"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-								/>
-							</svg>
-						</div>
-					</div>
-				</div>
-
-				<div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="text-sm text-gray-600 mb-1">Produits</p>
-							<p className="text-2xl font-bold text-gray-900">
-								{stats?.totalProducts ?? '—'}
-							</p>
-						</div>
-						<div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-							<svg
-								className="w-6 h-6 text-purple-600"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-								/>
-							</svg>
-						</div>
-					</div>
-				</div>
-
-				<div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="text-sm text-gray-600 mb-1">Commandes</p>
-							<p className="text-2xl font-bold text-gray-900">
-								{stats?.totalOrders ?? '—'}
-							</p>
-						</div>
-						<div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-							<svg
-								className="w-6 h-6 text-green-600"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-								/>
-							</svg>
-						</div>
-					</div>
-				</div>
-
-				<div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-					<div className="flex items-center justify-between">
-						<div>
-							<p className="text-sm text-gray-600 mb-1">Chiffre d'affaires</p>
-							<p className="text-2xl font-bold text-gray-900">
-								{stats ? `${formatRevenue(stats.totalRevenue)} FCFA` : '—'}
-							</p>
-						</div>
-						<div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-							<svg
-								className="w-6 h-6 text-orange-600"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-								/>
-							</svg>
-						</div>
-					</div>
-				</div>
+					);
+				})}
 			</div>
 
 			{/* Dernières commandes */}
-			<div className="bg-white rounded-xl shadow-sm border border-gray-100">
-				<div className="p-6 border-b border-gray-200">
-					<h2 className="text-xl font-semibold text-gray-900">
-						Dernières commandes
-					</h2>
+			<div className="bg-white rounded-2xl ring-1 ring-gray-200/70 shadow-sm overflow-hidden">
+				<div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+					<div>
+						<h2 className="text-lg font-bold text-gray-900 tracking-tight">
+							Dernières commandes
+						</h2>
+						<p className="text-sm text-gray-400">
+							Les 10 commandes les plus récentes
+						</p>
+					</div>
 				</div>
 				{stats ? (
 					<RecentOrdersTable orders={stats.recentOrders} />
 				) : (
-					<div className="text-gray-600 text-center py-8">
+					<div className="text-gray-500 text-center py-12">
 						Erreur lors du chargement des données
 					</div>
 				)}

@@ -95,7 +95,7 @@ export const FeaturedProducts = ({ products }: FeaturedProductsProps) => {
 						</h2>
 					</div>
 					<Link
-						href="/products"
+						href="/categories"
 						className="group hidden md:inline-flex items-center gap-2 text-[14px] font-semibold text-slate-700 hover:text-[#1D73B3] transition-colors"
 					>
 						Voir tous les produits
@@ -273,7 +273,7 @@ export const FeaturedProducts = ({ products }: FeaturedProductsProps) => {
 				{/* Mobile CTA */}
 				<div className="md:hidden flex justify-center mt-10">
 					<Link
-						href="/products"
+						href="/categories"
 						className="inline-flex items-center gap-2 px-6 py-3 bg-[#1D73B3] text-white text-[14px] font-semibold rounded-full hover:bg-[#1B3A5F] transition-colors"
 					>
 						Voir tous les produits

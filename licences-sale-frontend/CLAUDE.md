@@ -4,192 +4,109 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **Next.js 16** license sales management platform (Licences Sale) with an admin panel. It talks to a real NestJS backend at `http://localhost:3020/api` (see `licences-sale/licences-api/`). Legacy mock route handlers still live under `src/app/api/*` but new work must go through `~/lib/api.ts` — do not re-introduce mock-route calls.
+This is a **Next.js 16** license sales platform (Licences Sale) with a public storefront and an admin panel. It talks to a real NestJS backend at `http://localhost:3020/api` (source lives in the sibling `../licences-api-backend/`). The old in-memory mock API has been removed — only two thin legacy route handlers remain (`src/app/api/auth/me/route.ts`, `src/app/api/auth/logout/route.ts`). All new data work goes through `~/lib/api.ts`; do not add new handlers under `src/app/api/*`.
 
 **Key Features:**
-- Authentication system (login/register) with role-based access (CLIENT, ADMIN, SUPER_ADMIN)
-- Admin panel for managing categories, products, orders, clients, promotions, and notifications
-- Server-side rendering with Server Components
-- Server Actions for mutations
-- Mock API routes serving as a backend placeholder
+- Authentication (login/register) with role-based access (`CLIENT`, `ADMIN`, `SUPER_ADMIN`)
+- Public storefront: home, category browsing, product detail, search, cart, guest/authenticated checkout, account area (`compte`)
+- Admin panel: categories, products, orders, clients, promotions, notifications, settings
+- Server Components for rendering, Server Actions for mutations
 
 ## Commands
 
-### Development
 ```bash
 bun dev              # Start development server (port 3000)
-bun run build        # Build for production
+bun run build        # Build for production (output: 'standalone')
 bun start            # Start production server
-bun run lint         # Run Biome linter
+bun run lint         # biome check .
+bun run format       # biome format . --fix
 ```
 
-### Package Management
-Always use **bun** for all operations (install, test, run, etc.) - never npm or yarn.
+Always use **bun** for all operations (install, run, etc.) — never npm or yarn. There is no frontend test suite (no `test` script).
 
 ## Architecture
 
 ### Stack
-- **Framework:** Next.js 16 (App Router)
+- **Framework:** Next.js 16 (App Router) · React 19
 - **Language:** TypeScript (strict mode)
 - **Styling:** Tailwind CSS v4
-- **Validation:** Zod
-- **Server Actions:** next-safe-action
-- **URL State:** nuqs
-- **HTTP Client:** axios
-- **Date Handling:** date-fns
-- **Notifications:** sonner
-- **Code Quality:** Biome (formatter + linter)
+- **Validation:** Zod · **Server Actions:** next-safe-action · **URL State:** nuqs
+- **HTTP Client:** axios · **Dates:** date-fns · **Toasts:** sonner · **Icons:** lucide-react
+- **Code Quality:** Biome (formatter + linter), pinned at 2.3.13
 
-### Directory Structure
+### Route map (`src/app/`)
 
-```
-src/
-├── app/
-│   ├── admin/               # Admin panel routes (protected)
-│   │   ├── layout.tsx       # Admin layout with requireAdmin() check
-│   │   ├── categories/
-│   │   │   ├── page.tsx
-│   │   │   ├── actions.ts   # Server Actions for categories
-│   │   │   └── components/  # Page-specific components
-│   │   └── [other-sections]/
-│   ├── auth/
-│   │   ├── login/
-│   │   ├── register/
-│   │   └── actions.ts       # Server Actions for auth
-│   ├── api/                 # Mock API routes (placeholder backend)
-│   │   ├── mock-data.ts     # In-memory data store
-│   │   ├── auth/
-│   │   ├── categories/
-│   │   └── [other-routes]/
-│   ├── layout.tsx           # Root layout
-│   └── page.tsx             # Home page
-├── lib/
-│   ├── api.ts               # Axios client with auth interceptor
-│   └── session.ts           # Server-only session management
-└── validators/              # Zod schemas
-    ├── auth.ts
-    └── categories.ts
-```
+- **Storefront:** `page.tsx` (home), `about`, `cart`, `checkout` (+ `checkout/confirmation`), `categories` (+ `categories/[slug]` and hardcoded per-category pages: `adobe`, `antivirus`, `autodesk`, `office`, `systemes-exploitation`, `windows-server`), `products/[slug]` (**detail only**), `recherche` (product listing/search), `compte` (+ `commandes`, `favoris`, `licences`, `profil`, `securite`), plus static pages (`cgv`, `faq`, `contact`, `mentions-legales`, `politique-confidentialite`).
+- **Auth:** `auth/login`, `auth/register`, `auth/forgot-password`, `auth/actions.ts`.
+- **Admin (protected by `admin/layout.tsx` → `requireAdmin()`):** `categories`, `clients`, `orders`, `products`, `promotions`, `notifications`, `settings`, and the dashboard `admin/page.tsx`.
 
-### Data Flow Pattern
+There is **no `/products` listing route** — `app/products/page.tsx` was removed. Product listing now lives at `/recherche`; browsing happens through `/categories/[slug]` and the per-category pages. `products/` only holds the dynamic `[slug]` detail route. (Note: `src/components/footer.tsx` still links "Boutique" → `/products`, which is now dead — fix to `/recherche` when touching the footer.)
 
-1. **Server Components (pages)** - Fetch initial data server-side
-2. **Client Components** - Use Server Actions for mutations
-3. **Server Actions** (`actions.ts`) - Call API via `~/lib/api.ts`
-4. **API Routes** (`/api/*`) - Currently return mock data, meant to be replaced by external API
+### Per-route co-location pattern
 
-### Session Management
+A route folder bundles: `page.tsx` (Server Component), `actions.ts` (Server Actions), `lib.ts` (the route's backend calls), `search/params.tsx` (nuqs parsers), and `components/` (that route's UI). Dynamic routes nest the same layout under `[slug]/`. This is followed most consistently in the admin sections; many public/static pages are just a `page.tsx`.
 
-All session logic is in `~/lib/session.ts` with `"use server"` directive:
+### Data flow
 
-- **`setSessionToken(token)`** - Stores JWT in httpOnly cookie (`auth_token`, 8-day expiry)
-- **`getToken()`** - Retrieves token from cookie
-- **`getSession()`** - Validates token by calling the backend `${NEXT_PUBLIC_API_URL}/auth/me`, redirects to login if invalid
-- **`requireAdmin()`** - Used in admin layout, checks role and redirects if unauthorized
-- **`clearSession()`** - Deletes auth cookie
+1. **Server Components (pages)** fetch initial data server-side via the route's `lib.ts`.
+2. **Client Components** dispatch mutations through **Server Actions** in `actions.ts`, validated by next-safe-action against schemas in `~/validators/`.
+3. Both `lib.ts` and `actions.ts` call the backend through `~/lib/api.ts`.
+
+### API client (`~/lib/api.ts`)
+
+The **only** axios instance (`import 'server-only'`). Exports:
+- `apiClient` — the configured axios instance (base URL from `NEXT_PUBLIC_API_URL`, default `http://localhost:3020/api`).
+- `api` — `{ get, post, put, patch, delete }`, all generic-typed and routed through one authenticated-request helper.
+- `AuthenticationError` — any axios **401** is caught and rethrown as this typed error (other errors pass through). Handle it explicitly rather than catching all errors.
+
+It is the single place that reads auth cookies: it attaches `Authorization: Bearer <auth_token>` when present and forwards the `sessionId` cookie as a `Cookie:` header so the **guest cart** is identified server-side. There are **no** `loginApi`/`registerApi`/`getMeApi` exports — per-domain backend calls live in each route's `lib.ts` (e.g. `auth/login/lib.ts`).
+
+### Session management (`~/lib/session.ts`, `"use server"`)
+
+- `setSessionToken(token)` — stores the JWT in the httpOnly `auth_token` cookie (sameSite, 8-day expiry).
+- `getToken()` — reads the token cookie.
+- `getSession()` — validates the token by calling backend `${NEXT_PUBLIC_API_URL}/auth/me`.
+- `requireAdmin()` — used by `admin/layout.tsx`; checks role and redirects non-admins.
+- `clearSession()` — deletes the auth cookie.
 
 Never use localStorage/sessionStorage for tokens.
 
-### Authentication Flow
+### Guest vs. authenticated checkout
 
-1. User submits login/register form (Client Component)
-2. Form calls `loginAction` or `registerAction` (Server Action in `auth/actions.ts`)
-3. Server Action calls `loginApi()` or `registerApi()` from `~/lib/api.ts`
-4. API returns `accessToken` and user data
-5. Server Action calls `setSessionToken()` to store in cookie
-6. Admin layout's `requireAdmin()` validates session on each page load
-
-### API Client (`~/lib/api.ts`)
-
-Exports `api` object with methods: `get`, `post`, `put`, `patch`, `delete`. All methods:
-- Automatically attach `Authorization: Bearer <token>` if token exists
-- Use the base URL from `NEXT_PUBLIC_API_URL` (default: `http://localhost:3020/api`)
-- Return typed responses
-
-Also exports specific auth functions: `loginApi`, `registerApi`, `getMeApi`.
-
-### Mock Data System
-
-`src/app/api/mock-data.ts` contains in-memory mock data for:
-- Categories
-- Products
-- Orders
-- Clients
-- Dashboard stats
-
-API routes in `/api/*` import this file and manipulate the arrays directly. This is temporary - production will use a real backend.
+`checkout/actions.ts` posts to backend `/orders`. Because `~/lib/api.ts` auto-forwards both `auth_token` and the cart `sessionId`, a logged-in user's order is linked to their account while an anonymous visitor checks out as a guest — no branching needed in the action. `AuthenticationError` is surfaced to the user as "Session expirée, reconnectez-vous". (Note: this action is a plain `"use server"` function, not wrapped in next-safe-action — a deviation from the usual validator-backed pattern.)
 
 ## Conventions
 
-### File Naming
-- **All files in kebab-case** (e.g., `category-form-modal.tsx`, not `CategoryFormModal.tsx`)
-- Components use arrow functions, not function declarations
+### File naming & components
+- **All files kebab-case** (`category-form-modal.tsx`, never `CategoryFormModal.tsx`).
+- Components are **arrow functions**, not declarations (Biome `useArrowFunction: "error"`).
 
-### Component Organization
-- Pages must be Server Components unless interactivity requires client-side rendering
-- Page-specific components go in `[route]/components/`
-- For dynamic routes like `products/[slug]`, components go in `products/[slug]/components/`
-- Server Actions for a route go in `[route]/actions.ts`
-- Search params logic (nuqs) in `[route]/search/params.tsx`
+### Component organization
+- Pages are Server Components unless interactivity requires `"use client"`.
+- Page-specific components go in `[route]/components/`; for dynamic routes (`products/[slug]`), in `products/[slug]/components/`.
+- Server Actions in `[route]/actions.ts`; nuqs parsers in `[route]/search/params.tsx`.
 
-### Code Style (Biome)
-- Tabs for indentation
-- Single quotes for strings
-- Arrow functions enforced (`useArrowFunction: "error"`)
-- Auto-fix unused imports
-- Organize imports on save
+### Code style (Biome)
+Tabs · single quotes · arrow functions enforced · auto-fix unused imports · organize imports on save.
 
-### State Management
-- **Never use React Context** for global state
-- Use URL state (nuqs) for search/filter parameters
-- Use Server Actions with revalidation for data mutations
-- Server Components re-fetch on navigation
+### State management
+- **Default rule: do not use React Context** for global state. Use URL state (nuqs) for search/filter params, and Server Actions with `revalidatePath()` for mutations; Server Components re-fetch on navigation.
+- **Existing exceptions:** the cart and favorites are implemented as client Context providers (`src/components/cart-provider.tsx`, `src/components/favorites-provider.tsx`), both mounted in the root `src/app/layout.tsx`. `cart-provider` keeps the server cart as its source of truth (calls `/cart` directly via `fetch` with `credentials: 'include'`, with optimistic updates); `favorites-provider` persists a `string[]` to localStorage under `softkey_favorites`. These predate/contradict the rule — follow them for cart/favorites work, but don't introduce new Context providers for other state.
 
 ### Validation
-- All schemas in `~/validators/` using Zod
-- Server Actions validate input via `.schema()` from next-safe-action
-- API routes perform basic validation (check required fields)
+- Zod schemas live in `~/validators/`.
+- Server Actions validate input via `.schema()` from next-safe-action.
 
-## Important Notes
+## Important notes
 
-### Path Aliases
-- `~/` maps to `src/`
-- `@/` maps to project root
+- **Path aliases:** `~/` → `src/`, `@/` → project root.
+- **Env:** `NEXT_PUBLIC_API_URL` (default `http://localhost:3020/api`).
+- **Build:** `output: 'standalone'` in `next.config.ts` (Docker-friendly). New `next/image` remote hosts must be whitelisted there.
+- **TypeScript:** strict mode, JSX `react-jsx`.
 
-### Environment Variables
-- `NEXT_PUBLIC_API_URL` - Backend API URL (default: `http://localhost:3020/api`)
+## Development workflow
 
-### Build Output
-- Configured as `standalone` for Docker/containerized deployments (`output: 'standalone'` in `next.config.ts`)
-
-### TypeScript
-- Strict mode enabled
-- Target: ES2017
-- JSX: react-jsx (new transform)
-
-## Development Workflow
-
-1. **Adding a new admin section:**
-   - Create folder in `src/app/admin/[section]/`
-   - Add `page.tsx` (Server Component)
-   - Add `actions.ts` for mutations
-   - Add `components/` for UI elements
-   - Create validators in `~/validators/[section].ts`
-   - Add corresponding API routes in `src/app/api/[section]/`
-
-2. **Adding API endpoints:**
-   - Add the endpoint to the NestJS backend in `licences-sale/licences-api/src/<module>/` — controller + service + Zod DTO.
-   - From the frontend, call it via `~/lib/api.ts` (the only axios instance). Do **not** add new handlers under `src/app/api/*`; those are legacy mocks slated for removal.
-
-3. **Server Actions pattern:**
-   - Always use `"use server"` directive
-   - Create safe action client: `const action = createSafeActionClient()`
-   - Chain `.schema()` and `.action()`
-   - Call `revalidatePath()` after mutations
-   - Return `{ success: boolean, data?, error? }` structure
-
-4. **Testing the app:**
-   - Start dev server: `bun dev`
-   - Navigate to `/auth/login` to sign in
-   - Admin panel at `/admin`
-   - Mock credentials depend on implementation (currently uses mock API)
+1. **New admin section:** create `src/app/admin/[section]/` with `page.tsx`, `actions.ts`, `lib.ts`, `components/`, and validators in `~/validators/[section].ts`. Do **not** add API routes under `src/app/api/*` — add the endpoint to the NestJS backend instead.
+2. **New API endpoint:** add controller + service + Zod DTO in `../licences-api-backend/src/<module>/`, then call it from a route `lib.ts` via `~/lib/api.ts`.
+3. **Server Actions:** `"use server"` → `createSafeActionClient()` → chain `.schema()` and `.action()` → call `revalidatePath()` after mutations → return `{ success, data?, error? }`.
+4. **Run locally:** start the backend on 3020, then `bun dev`; sign in at `/auth/login`, admin panel at `/admin`.

@@ -3,24 +3,31 @@ import axios from 'axios';
 import { cookies } from 'next/headers';
 
 // URL de base de l'API (peut être l'API mock locale ou une API externe)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3020/api';
+const API_BASE_URL =
+	process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3020/api';
 
-// Instance axios avec configuration de base
+// Instance axios avec configuration de base.
+// Pas de Content-Type par défaut : il est défini par requête (cf. ci-dessous),
+// car forcer 'application/json' casse les uploads FormData (axios convertirait
+// le FormData en JSON et perdrait le fichier).
 export const apiClient = axios.create({
 	baseURL: API_BASE_URL,
-	headers: {
-		'Content-Type': 'application/json',
-	},
 });
 
-// Fonction pour récupérer le token directement (évite l'import circulaire)
-const getTokenDirect = async (): Promise<string | undefined> => {
+// Fonction pour récupérer le token et le sessionId du cart (évite l'import circulaire)
+const getAuthCookies = async (): Promise<{
+	token?: string;
+	sessionId?: string;
+}> => {
 	try {
 		const cookieStore = await cookies();
-		return cookieStore.get('auth_token')?.value;
+		return {
+			token: cookieStore.get('auth_token')?.value,
+			sessionId: cookieStore.get('sessionId')?.value,
+		};
 	} catch {
-		// Si on n'est pas dans un contexte serveur, retourner undefined
-		return undefined;
+		// Si on n'est pas dans un contexte serveur, retourner vide
+		return {};
 	}
 };
 
@@ -32,17 +39,26 @@ export class AuthenticationError extends Error {
 	}
 }
 
-// Fonction helper pour créer une requête avec token
+// Fonction helper pour créer une requête avec token + cookie de session cart
 const createAuthenticatedRequest = async <T>(
 	config: Parameters<typeof apiClient.request>[0],
 ): Promise<T> => {
-	const token = await getTokenDirect();
+	const { token, sessionId } = await getAuthCookies();
+
+	// Pour un upload (FormData), on NE met PAS de Content-Type : axios pose
+	// lui-même `multipart/form-data; boundary=...`. Sinon le fichier est perdu.
+	const isFormData =
+		typeof FormData !== 'undefined' && config.data instanceof FormData;
 
 	const requestConfig = {
 		...config,
 		headers: {
+			...(isFormData ? {} : { 'Content-Type': 'application/json' }),
 			...config.headers,
 			...(token ? { Authorization: `Bearer ${token}` } : {}),
+			...(sessionId
+				? { Cookie: `sessionId=${encodeURIComponent(sessionId)}` }
+				: {}),
 		},
 	};
 

@@ -12,7 +12,7 @@ const slides = [
 		description:
 			'Passez à la nouvelle génération avec Windows 11. Performance, sécurité et design moderne réunis.',
 		cta: 'Découvrir',
-		link: '/products?q=windows',
+		link: '/categories/systemes-exploitation',
 		bgImage:
 			'https://images.unsplash.com/photo-1633419461186-7d40a38105ec?auto=format&fit=crop&w=2080&q=80',
 	},
@@ -23,7 +23,7 @@ const slides = [
 		description:
 			"Word, Excel, PowerPoint et plus encore. Tout ce dont vous avez besoin pour être productif.",
 		cta: 'Explorer',
-		link: '/products?q=office',
+		link: '/categories/office',
 		bgImage:
 			'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=2080&q=80',
 	},
@@ -34,7 +34,7 @@ const slides = [
 		description:
 			'Protégez vos appareils et vos données avec les meilleures solutions antivirus du marché.',
 		cta: 'Protéger',
-		link: '/products?q=antivirus',
+		link: '/categories/antivirus',
 		bgImage:
 			'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=2080&q=80',
 	},
@@ -45,7 +45,7 @@ const slides = [
 		description:
 			'Libérez votre créativité avec les outils professionnels de design et de conception.',
 		cta: 'Créer',
-		link: '/products?q=adobe',
+		link: '/categories/adobe',
 		bgImage:
 			'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=2080&q=80',
 	},
@@ -128,7 +128,7 @@ export const HeroSlider = () => {
 							/>
 						</Link>
 						<Link
-							href="/products"
+							href="/categories"
 							className="inline-flex items-center gap-3 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold rounded-xl border border-white/30 hover:bg-white/20 transition-all duration-300"
 						>
 							Voir la boutique

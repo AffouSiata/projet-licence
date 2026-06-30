@@ -12,7 +12,7 @@ async function bootstrap() {
 	app.use(
 		session({
 			name: 'sessionId',
-			secret: configService.get<string>('jwt.secret') || 'session-secret-key',
+			secret: configService.getOrThrow<string>('jwt.secret'),
 			resave: false,
 			saveUninitialized: true,
 			cookie: {

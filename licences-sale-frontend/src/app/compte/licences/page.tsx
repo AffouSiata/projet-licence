@@ -72,7 +72,7 @@ export default function LicencesPage() {
 						</div>
 						<div className="flex flex-col sm:flex-row gap-4 justify-center">
 							<Link
-								href="/products"
+								href="/categories"
 								className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#1D70B8] to-[#3B9DE8] text-white font-bold rounded-xl hover:shadow-lg transition-all"
 							>
 								<ShoppingBag size={20} />

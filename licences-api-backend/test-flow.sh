@@ -16,8 +16,8 @@ echo -e "${BLUE}🧪 Test Flow Complet API Licences${NC}"
 echo -e "${BLUE}========================================${NC}\n"
 
 # Admin credentials
-ADMIN_EMAIL="abdulkabore@gmail.com"
-ADMIN_PASSWORD="abdulkabore@gmail.com1@T"
+ADMIN_EMAIL="licence@admin.com"
+ADMIN_PASSWORD="LicenceAdmin33"
 ADMIN_TOKEN=""
 CATEGORY_ID=""
 PRODUCT_ID=""

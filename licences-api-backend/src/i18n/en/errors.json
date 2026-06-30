@@ -17,7 +17,9 @@
 	"auth": {
 		"emailExists": "This email is already in use",
 		"badCredentials": "Email or password is incorrect",
-		"adminNotFound": "Admin not found"
+		"adminNotFound": "Admin not found",
+		"wrongPassword": "Current password is incorrect",
+		"samePassword": "The new password must be different from the old one"
 	},
 	"cart": {
 		"productUnavailable": "This product is no longer available",

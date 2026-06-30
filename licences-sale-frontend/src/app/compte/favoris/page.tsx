@@ -125,7 +125,7 @@ export default function FavoritesPage() {
 								Parcourez notre catalogue et cliquez sur le cœur pour ajouter des produits à vos favoris.
 							</p>
 							<Link
-								href="/products"
+								href="/categories"
 								className="inline-flex items-center gap-2 px-6 py-3 bg-[#1D73B3] text-white font-semibold rounded-xl hover:bg-[#165d91] transition-colors"
 							>
 								Découvrir nos produits

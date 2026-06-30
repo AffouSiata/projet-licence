@@ -37,7 +37,8 @@ bun pour tout. installation, test, etc...
 
 ## Etat global
 
-- Ne jamais utiliser React Context.
+- Ne jamais utiliser React Context (par defaut). Etat de recherche/filtres via nuqs (URL), mutations via Server Actions.
+- Exceptions existantes : le panier (`src/components/cart-provider.tsx`) et les favoris (`src/components/favorites-provider.tsx`) sont des providers Context client montes dans `src/app/layout.tsx`. A suivre pour ces deux domaines uniquement ; ne pas creer de nouveaux Context ailleurs.
 
 ## Conventions de fichiers
 
@@ -61,9 +62,13 @@ bun pour tout. installation, test, etc...
 
 ## Organisation des pages (exemple)
 
-- Page principale: `/products/page.tsx`
-- Actions server: `/products/actions.ts`
-- Appels API de la page: `/products/lib.ts`
-- Search params (nuqs): `/products/search/params.tsx`
-- Tous les composants de `products/` doivent etre dans `products/components`.
+Exemple avec la page de recherche/listing `/recherche` :
+
+- Page principale: `/recherche/page.tsx`
+- Actions server: `/recherche/actions.ts`
+- Appels API de la page: `/recherche/lib.ts`
+- Search params (nuqs): `/recherche/search/params.tsx`
+- Tous les composants d'une route doivent etre dans `components/` (ex. `recherche/components`).
 - Pour une route dynamique `products/[slug]`, les composants vont dans `/products/[slug]/components` etc...
+
+Note : il n'y a plus de page de listing `/products` — elle a ete supprimee. Le listing/recherche produits est sur `/recherche`, et la navigation par categorie sur `/categories/[slug]`. Le dossier `products/` ne contient que la route de detail `[slug]`.
