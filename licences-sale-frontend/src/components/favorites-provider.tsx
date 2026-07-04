@@ -1,6 +1,19 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import {
+	createContext,
+	type ReactNode,
+	useCallback,
+	useContext,
+	useEffect,
+	useRef,
+	useState,
+} from 'react';
+import {
+	addFavoriteAction,
+	removeFavoriteAction,
+	syncFavoritesAction,
+} from './favorites-actions';
 
 interface FavoritesContextType {
 	favorites: string[];
@@ -19,26 +32,43 @@ const STORAGE_KEY = 'softkey_favorites';
 export function FavoritesProvider({ children }: { children: ReactNode }) {
 	const [favorites, setFavorites] = useState<string[]>([]);
 	const [isLoaded, setIsLoaded] = useState(false);
+	// 'guest' -> persistance localStorage ; 'user' -> persistance backend (compte)
+	const modeRef = useRef<'guest' | 'user'>('guest');
+	const favoritesRef = useRef<string[]>([]);
 
-	// Charger les favoris depuis localStorage au montage
 	useEffect(() => {
+		favoritesRef.current = favorites;
+	}, [favorites]);
+
+	// Montage : charge le localStorage, puis synchronise avec le compte si connecté.
+	useEffect(() => {
+		let guestIds: string[] = [];
 		try {
 			const stored = localStorage.getItem(STORAGE_KEY);
-			if (stored) {
-				const parsed = JSON.parse(stored);
-				if (Array.isArray(parsed)) {
-					setFavorites(parsed);
-				}
-			}
+			const parsed = stored ? JSON.parse(stored) : [];
+			if (Array.isArray(parsed)) guestIds = parsed;
 		} catch (error) {
 			console.error('Erreur lors du chargement des favoris:', error);
 		}
-		setIsLoaded(true);
+		setFavorites(guestIds);
+
+		syncFavoritesAction(guestIds)
+			.then(({ loggedIn, ids }) => {
+				if (loggedIn) {
+					modeRef.current = 'user';
+					setFavorites(ids);
+					// Les favoris vivent désormais dans le compte : on nettoie le local.
+					try {
+						localStorage.removeItem(STORAGE_KEY);
+					} catch {}
+				}
+			})
+			.finally(() => setIsLoaded(true));
 	}, []);
 
-	// Sauvegarder les favoris dans localStorage à chaque changement
+	// Persistance localStorage uniquement pour les invités.
 	useEffect(() => {
-		if (isLoaded) {
+		if (isLoaded && modeRef.current === 'guest') {
 			try {
 				localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
 			} catch (error) {
@@ -49,31 +79,43 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
 	const isFavorite = useCallback(
 		(productId: string) => favorites.includes(productId),
-		[favorites]
+		[favorites],
 	);
 
 	const addFavorite = useCallback((productId: string) => {
-		setFavorites((prev) => {
-			if (prev.includes(productId)) return prev;
-			return [...prev, productId];
-		});
+		if (favoritesRef.current.includes(productId)) return;
+		setFavorites((prev) =>
+			prev.includes(productId) ? prev : [...prev, productId],
+		);
+		if (modeRef.current === 'user') {
+			addFavoriteAction(productId).catch(() => {});
+		}
 	}, []);
 
 	const removeFavorite = useCallback((productId: string) => {
 		setFavorites((prev) => prev.filter((id) => id !== productId));
+		if (modeRef.current === 'user') {
+			removeFavoriteAction(productId).catch(() => {});
+		}
 	}, []);
 
-	const toggleFavorite = useCallback((productId: string) => {
-		setFavorites((prev) => {
-			if (prev.includes(productId)) {
-				return prev.filter((id) => id !== productId);
+	const toggleFavorite = useCallback(
+		(productId: string) => {
+			if (favoritesRef.current.includes(productId)) {
+				removeFavorite(productId);
+			} else {
+				addFavorite(productId);
 			}
-			return [...prev, productId];
-		});
-	}, []);
+		},
+		[addFavorite, removeFavorite],
+	);
 
 	const clearFavorites = useCallback(() => {
+		const current = favoritesRef.current;
 		setFavorites([]);
+		if (modeRef.current === 'user') {
+			for (const id of current) removeFavoriteAction(id).catch(() => {});
+		}
 	}, []);
 
 	return (

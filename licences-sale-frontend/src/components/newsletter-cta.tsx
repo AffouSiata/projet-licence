@@ -1,16 +1,19 @@
 'use client';
 
-import { useState } from 'react';
 import {
-	Send,
-	Mail,
-	Percent,
-	Sparkles,
-	Shield,
+	ArrowRight,
 	CheckCircle2,
 	Loader2,
-	ArrowRight,
+	Mail,
+	Percent,
+	Shield,
+	Sparkles,
 } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+
+const API_BASE_URL =
+	process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3020/api';
 
 export const NewsletterCTA = () => {
 	const [email, setEmail] = useState('');
@@ -22,10 +25,31 @@ export const NewsletterCTA = () => {
 		if (!email) return;
 
 		setIsSubmitting(true);
-		await new Promise((resolve) => setTimeout(resolve, 1500));
-		setIsSubmitting(false);
-		setIsSubscribed(true);
-		setEmail('');
+		try {
+			const res = await fetch(`${API_BASE_URL}/newsletter`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email }),
+			});
+			if (!res.ok) {
+				const data = await res.json().catch(() => null);
+				const message =
+					typeof data?.message === 'string'
+						? data.message
+						: 'Inscription impossible. Vérifiez votre email et réessayez.';
+				throw new Error(message);
+			}
+			setIsSubscribed(true);
+			setEmail('');
+		} catch (error) {
+			toast.error(
+				error instanceof Error
+					? error.message
+					: 'Inscription impossible. Réessayez.',
+			);
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	return (
@@ -72,23 +96,20 @@ export const NewsletterCTA = () => {
 								</h2>
 
 								<p className="text-lg text-white/60 mb-10 max-w-md leading-relaxed">
-									Inscrivez-vous et bénéficiez de réductions exclusives, nouveautés
-									et conseils directement dans votre boîte mail.
+									Inscrivez-vous et bénéficiez de réductions exclusives,
+									nouveautés et conseils directement dans votre boîte mail.
 								</p>
 
 								{/* Benefits */}
 								<div className="space-y-4">
 									{[
-										{ icon: Percent, text: 'Jusqu\'à -30% sur vos achats' },
+										{ icon: Percent, text: "Jusqu'à -30% sur vos achats" },
 										{ icon: Sparkles, text: 'Accès anticipé aux nouveautés' },
 										{ icon: Shield, text: 'Conseils sécurité informatique' },
 									].map((item) => {
 										const Icon = item.icon;
 										return (
-											<div
-												key={item.text}
-												className="flex items-center gap-4"
-											>
+											<div key={item.text} className="flex items-center gap-4">
 												<div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/10">
 													<Icon size={18} className="text-white/80" />
 												</div>
@@ -113,8 +134,8 @@ export const NewsletterCTA = () => {
 												Inscription réussie !
 											</h3>
 											<p className="text-gray-500 mb-6">
-												Bienvenue dans notre communauté. Vérifiez votre boîte mail
-												pour confirmer votre inscription.
+												Bienvenue dans notre communauté. Vérifiez votre boîte
+												mail pour confirmer votre inscription.
 											</p>
 											<button
 												type="button"
@@ -185,12 +206,18 @@ export const NewsletterCTA = () => {
 											<div className="mt-8 pt-6 border-t border-gray-100">
 												<div className="flex items-center justify-center gap-6 text-sm text-gray-400">
 													<div className="flex items-center gap-2">
-														<CheckCircle2 size={14} className="text-green-500" />
+														<CheckCircle2
+															size={14}
+															className="text-green-500"
+														/>
 														<span>Zéro spam</span>
 													</div>
 													<div className="w-1 h-1 bg-gray-300 rounded-full" />
 													<div className="flex items-center gap-2">
-														<CheckCircle2 size={14} className="text-green-500" />
+														<CheckCircle2
+															size={14}
+															className="text-green-500"
+														/>
 														<span>Désabonnement facile</span>
 													</div>
 												</div>

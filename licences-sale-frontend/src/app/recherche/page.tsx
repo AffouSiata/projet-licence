@@ -1,15 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { ArrowRight, Loader2, Search } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowRight, Loader2, Package, Search, ShoppingCart, Check, Heart } from 'lucide-react';
-import { toast } from 'sonner';
-import { Header } from '~/components/header';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Footer } from '~/components/footer';
-import { useCart } from '~/components/cart-provider';
-import { useFavorites } from '~/components/favorites-provider';
+import { Header } from '~/components/header';
+import { ProductCard } from '~/components/product-card';
 import { getProducts } from '~/lib/products';
 import type { Product } from '~/validators/products';
 
@@ -19,10 +16,6 @@ const SearchPage = () => {
 
 	const [products, setProducts] = useState<Product[]>([]);
 	const [loading, setLoading] = useState(false);
-	const [addedProductId, setAddedProductId] = useState<string | null>(null);
-
-	const { addItem } = useCart();
-	const { isFavorite, toggleFavorite } = useFavorites();
 
 	useEffect(() => {
 		if (!query) {
@@ -43,34 +36,6 @@ const SearchPage = () => {
 		fetchData();
 	}, [query]);
 
-	const handleAddToCart = async (e: React.MouseEvent, product: Product) => {
-		e.preventDefault();
-		e.stopPropagation();
-		try {
-			await addItem(product.id, 1);
-			setAddedProductId(product.id);
-			setTimeout(() => setAddedProductId(null), 1500);
-		} catch (err) {
-			// silent
-		}
-	};
-
-	const handleToggleFavorite = (
-		e: React.MouseEvent,
-		productId: string,
-		productName: string,
-	) => {
-		e.preventDefault();
-		e.stopPropagation();
-		const wasInFavorites = isFavorite(productId);
-		toggleFavorite(productId);
-		toast.success(
-			wasInFavorites
-				? `${productName} retiré des favoris`
-				: `${productName} ajouté aux favoris`,
-		);
-	};
-
 	return (
 		<>
 			<Header />
@@ -88,7 +53,9 @@ const SearchPage = () => {
 						<div className="inline-flex items-center gap-2 px-4 py-2 bg-white/15 rounded-full mb-4 border border-white/20">
 							<Search size={16} className="text-white" />
 							<span className="text-sm font-semibold text-white">
-								{query ? `Résultats pour « ${query} »` : 'Rechercher un produit'}
+								{query
+									? `Résultats pour « ${query} »`
+									: 'Rechercher un produit'}
 							</span>
 						</div>
 						<h1 className="text-3xl md:text-4xl font-bold text-white">
@@ -118,100 +85,9 @@ const SearchPage = () => {
 							</div>
 						) : products.length > 0 ? (
 							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-								{products.map((product) => {
-									const price =
-										typeof product.price === 'string'
-											? Number.parseFloat(product.price)
-											: product.price;
-									const discount = product.discount || 0;
-
-									return (
-										<div
-											key={product.id}
-											className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-transparent hover:shadow-xl transition-all duration-300"
-										>
-											<div className="relative h-56 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
-												{discount > 0 && (
-													<div className="absolute top-3 left-3 z-10">
-														<span className="inline-flex items-center px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-lg">
-															-{discount}%
-														</span>
-													</div>
-												)}
-												<button
-													type="button"
-													onClick={(e) =>
-														handleToggleFavorite(e, product.id, product.name)
-													}
-													className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-lg shadow-md flex items-center justify-center transition-colors ${
-														isFavorite(product.id)
-															? 'bg-red-50 text-red-500'
-															: 'bg-white text-gray-400 hover:text-red-500'
-													}`}
-												>
-													<Heart
-														size={18}
-														className={isFavorite(product.id) ? 'fill-red-500' : ''}
-													/>
-												</button>
-												<Link
-													href={`/products/${product.slug}`}
-													className="block h-full p-6"
-												>
-													<div className="relative w-full h-full">
-														{product.image ? (
-															<Image
-																src={product.image}
-																alt={product.name}
-																fill
-																className="object-contain group-hover:scale-110 transition-transform duration-500"
-															/>
-														) : (
-															<div className="w-full h-full flex items-center justify-center">
-																<Package size={64} className="text-gray-300" />
-															</div>
-														)}
-													</div>
-												</Link>
-											</div>
-											<div className="p-5">
-												<Link href={`/products/${product.slug}`}>
-													<h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-[#1D70B8] transition-colors">
-														{product.name}
-													</h3>
-												</Link>
-												{product.shortDesc && (
-													<p className="text-sm text-gray-500 mb-4 line-clamp-2">
-														{product.shortDesc}
-													</p>
-												)}
-												<div className="flex items-center justify-between pt-3 border-t border-gray-100">
-													<span className="text-xl font-bold text-gray-900">
-														{price.toLocaleString()} F
-													</span>
-													<button
-														type="button"
-														onClick={(e) => handleAddToCart(e, product)}
-														disabled={product.stockQuantity <= 0}
-														className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all duration-200 ${
-															product.stockQuantity <= 0
-																? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-																: addedProductId === product.id
-																	? 'bg-green-500 text-white scale-110'
-																	: 'bg-[#1D70B8] text-white hover:bg-[#155a96] hover:scale-105'
-														}`}
-													>
-														{addedProductId === product.id ? (
-															<Check size={20} />
-														) : (
-															<ShoppingCart size={20} />
-														)}
-													</button>
-												</div>
-											</div>
-										</div>
-									);
-								})}
+								{products.map((product) => (
+									<ProductCard key={product.id} product={product} />
+								))}
 							</div>
 						) : (
 							<div className="text-center py-20">

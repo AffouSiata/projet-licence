@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { useAction } from 'next-safe-action/hooks';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { handleActionError } from '~/lib/action-error';
 import { compressImage } from '~/lib/compress-image';
 import type { Product } from '~/validators/products';
 import { createProductAction, updateProductAction } from '../actions';
@@ -79,6 +80,7 @@ export const ProductFormModal = ({
 					toast.error(data.error);
 				}
 			},
+			onError: handleActionError,
 		},
 	);
 
@@ -93,6 +95,7 @@ export const ProductFormModal = ({
 					toast.error(data.error);
 				}
 			},
+			onError: handleActionError,
 		},
 	);
 
@@ -100,6 +103,13 @@ export const ProductFormModal = ({
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+
+		// À la création, l'image est obligatoire : message clair plutôt que
+		// l'infobulle native (ou un échec silencieux).
+		if (!isEdit && !image) {
+			toast.error('Veuillez sélectionner une image du produit.');
+			return;
+		}
 
 		// Compresse l'image avant l'envoi pour accélérer l'upload
 		const finalImage = image ? await compressImage(image) : image;

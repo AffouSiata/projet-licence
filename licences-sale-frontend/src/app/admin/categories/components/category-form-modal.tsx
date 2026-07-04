@@ -4,6 +4,7 @@ import { Check, ImageIcon, Loader2, Plus, X } from 'lucide-react';
 import { useAction } from 'next-safe-action/hooks';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { handleActionError } from '~/lib/action-error';
 import { compressImage } from '~/lib/compress-image';
 import type { Category } from '~/validators/categories';
 import { createCategoryAction, updateCategoryAction } from '../actions';
@@ -89,6 +90,7 @@ export const CategoryFormModal = ({
 					toast.error(data.error);
 				}
 			},
+			onError: handleActionError,
 		},
 	);
 
@@ -103,6 +105,7 @@ export const CategoryFormModal = ({
 					toast.error(data.error);
 				}
 			},
+			onError: handleActionError,
 		},
 	);
 

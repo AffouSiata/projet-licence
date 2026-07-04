@@ -1,18 +1,19 @@
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import {
-	ShoppingBag,
+	ChevronRight,
 	Key,
-	User,
 	LogOut,
 	Package,
+	ShoppingBag,
+	Star,
 	TrendingUp,
-	ChevronRight,
+	User,
 } from 'lucide-react';
-import { requireSession, clearSession } from '~/lib/session';
-import { api } from '~/lib/api';
-import { Header } from '~/components/header';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Footer } from '~/components/footer';
+import { Header } from '~/components/header';
+import { api } from '~/lib/api';
+import { clearSession, requireSession } from '~/lib/session';
 
 interface Order {
 	id: string;
@@ -115,6 +116,14 @@ export default async function ComptePage() {
 									>
 										<User size={20} />
 										<span>Mon profil</span>
+									</Link>
+
+									<Link
+										href="/compte/avis"
+										className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition-all"
+									>
+										<Star size={20} />
+										<span>Laisser un avis</span>
 									</Link>
 
 									<hr className="my-4 border-gray-100" />
@@ -263,7 +272,7 @@ export default async function ComptePage() {
 																	day: 'numeric',
 																	month: 'short',
 																	year: 'numeric',
-																}
+																},
 															)}
 															{' • '}
 															{order.items?.length || 0} article

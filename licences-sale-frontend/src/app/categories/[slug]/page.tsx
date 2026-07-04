@@ -1,46 +1,41 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
 import {
-	Filter,
-	Grid3X3,
-	LayoutList,
+	ArrowRight,
+	Award,
+	BadgeCheck,
+	Check,
 	ChevronDown,
 	ChevronUp,
-	ShoppingCart,
-	Monitor,
+	Clock,
 	FileText,
-	Shield,
-	Server,
+	Grid3X3,
+	LayoutList,
+	Loader2,
+	Monitor,
+	Package,
 	Palette,
 	PenTool,
-	Check,
-	Zap,
-	Award,
-	Loader2,
-	Star,
-	Eye,
-	Heart,
+	Server,
+	Shield,
+	ShoppingCart,
 	SlidersHorizontal,
-	X,
-	ArrowRight,
 	Sparkles,
-	Package,
-	Clock,
-	BadgeCheck,
 	TrendingUp,
+	X,
+	Zap,
 } from 'lucide-react';
-import { Header } from '~/components/header';
-import { Footer } from '~/components/footer';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { useCart } from '~/components/cart-provider';
-import { useFavorites } from '~/components/favorites-provider';
-import { toast } from 'sonner';
+import { Footer } from '~/components/footer';
+import { Header } from '~/components/header';
+import { ProductCard } from '~/components/product-card';
 import { getCategoryBySlug, getProducts } from '~/lib/products';
-import type { Product } from '~/validators/products';
 import type { Category } from '~/validators/categories';
+import type { Product } from '~/validators/products';
 
 // Configuration des styles par catégorie
 const categoryStyles: Record<
@@ -160,27 +155,15 @@ export default function CategoryPage() {
 	const [error, setError] = useState<string | null>(null);
 
 	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-	const [sortBy, setSortBy] = useState<'price' | 'name' | 'createdAt'>('createdAt');
+	const [sortBy, setSortBy] = useState<'price' | 'name' | 'createdAt'>(
+		'createdAt',
+	);
 	const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 	const [addedProductId, setAddedProductId] = useState<string | null>(null);
 	const [showFilters, setShowFilters] = useState(false);
 	const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
-	const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
 
 	const { addItem } = useCart();
-	const { isFavorite, toggleFavorite } = useFavorites();
-
-	const handleToggleFavorite = (e: React.MouseEvent, productId: string, productName: string) => {
-		e.preventDefault();
-		e.stopPropagation();
-		const wasInFavorites = isFavorite(productId);
-		toggleFavorite(productId);
-		if (wasInFavorites) {
-			toast.success(`${productName} retiré des favoris`);
-		} else {
-			toast.success(`${productName} ajouté aux favoris`);
-		}
-	};
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -225,7 +208,7 @@ export default function CategoryPage() {
 	const stats = useMemo(() => {
 		if (products.length === 0) return { minPrice: 0, maxPrice: 0, avgPrice: 0 };
 		const prices = products.map((p) =>
-			typeof p.price === 'string' ? Number.parseFloat(p.price) : p.price
+			typeof p.price === 'string' ? Number.parseFloat(p.price) : p.price,
 		);
 		return {
 			minPrice: Math.min(...prices),
@@ -374,14 +357,20 @@ export default function CategoryPage() {
 							>
 								Accueil
 							</Link>
-							<ChevronDown size={14} className="text-white/50 rotate-[-90deg]" />
+							<ChevronDown
+								size={14}
+								className="text-white/50 rotate-[-90deg]"
+							/>
 							<Link
 								href="/categories"
 								className="text-white/70 hover:text-white transition-colors"
 							>
 								Catégories
 							</Link>
-							<ChevronDown size={14} className="text-white/50 rotate-[-90deg]" />
+							<ChevronDown
+								size={14}
+								className="text-white/50 rotate-[-90deg]"
+							/>
 							<span className="text-white font-medium">{category.name}</span>
 						</nav>
 
@@ -531,9 +520,7 @@ export default function CategoryPage() {
 									>
 										<SlidersHorizontal size={18} />
 										<span>Filtres</span>
-										{showFilters && (
-											<ChevronUp size={16} className="ml-1" />
-										)}
+										{showFilters && <ChevronUp size={16} className="ml-1" />}
 									</button>
 
 									<div className="hidden sm:block h-8 w-px bg-gray-200" />
@@ -696,169 +683,10 @@ export default function CategoryPage() {
 									const discount = product.discount || 0;
 									const originalPrice = getOriginalPrice(
 										product.price,
-										product.discount
+										product.discount,
 									);
-									const isHovered = hoveredProduct === product.id;
-
 									return viewMode === 'grid' ? (
-										/* Grid View - Modern Card */
-										<div
-											key={product.id}
-											className="group relative"
-											onMouseEnter={() => setHoveredProduct(product.id)}
-											onMouseLeave={() => setHoveredProduct(null)}
-										>
-											{/* Hover glow */}
-											<div
-												className={`absolute -inset-1 bg-gradient-to-r ${style.gradient} rounded-3xl blur-lg opacity-0 group-hover:opacity-20 transition-all duration-500`}
-											/>
-
-											<div
-												className={`relative bg-white rounded-2xl overflow-hidden border transition-all duration-300 ${
-													isHovered
-														? 'border-transparent shadow-2xl -translate-y-2'
-														: 'border-gray-100 shadow-sm hover:shadow-lg'
-												}`}
-											>
-												{/* Image Container */}
-												<div className="relative h-56 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
-													{/* Badges */}
-													<div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
-														{discount > 0 && (
-															<span className="inline-flex items-center px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-lg">
-																-{discount}%
-															</span>
-														)}
-														{product.stockQuantity <= 5 &&
-															product.stockQuantity > 0 && (
-																<span className="inline-flex items-center px-2.5 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg">
-																	Stock limité
-																</span>
-															)}
-													</div>
-
-													{/* Quick actions */}
-													<div
-														className={`absolute top-3 right-3 z-10 flex flex-col gap-2 transition-all duration-300 ${
-															isHovered
-																? 'opacity-100 translate-x-0'
-																: 'opacity-0 translate-x-2'
-														}`}
-													>
-														<button
-															type="button"
-															onClick={(e) => handleToggleFavorite(e, product.id, product.name)}
-															className={`w-9 h-9 rounded-lg shadow-md flex items-center justify-center transition-colors ${
-																isFavorite(product.id)
-																	? 'bg-red-50 text-red-500'
-																	: 'bg-white text-gray-400 hover:text-red-500'
-															}`}
-														>
-															<Heart size={18} className={isFavorite(product.id) ? 'fill-red-500' : ''} />
-														</button>
-														<Link
-															href={`/products/${product.slug}`}
-															className="w-9 h-9 bg-white rounded-lg shadow-md flex items-center justify-center text-gray-400 hover:text-[#1D70B8] transition-colors"
-														>
-															<Eye size={18} />
-														</Link>
-													</div>
-
-													{/* Product Image */}
-													<Link
-														href={`/products/${product.slug}`}
-														className="block h-full p-6"
-													>
-														<div
-															className={`relative w-full h-full transition-transform duration-500 ${
-																isHovered ? 'scale-110' : ''
-															}`}
-														>
-															{product.image ? (
-																<Image
-																	src={product.image}
-																	alt={product.name}
-																	fill
-																	className="object-contain"
-																/>
-															) : (
-																<div className="w-full h-full flex items-center justify-center">
-																	<Package
-																		size={64}
-																		className="text-gray-300"
-																	/>
-																</div>
-															)}
-														</div>
-													</Link>
-												</div>
-
-												{/* Content */}
-												<div className="p-5">
-													{/* Category tag */}
-													<span
-														className="inline-block text-xs font-semibold uppercase tracking-wider mb-2"
-														style={{ color: style.color }}
-													>
-														{category.name}
-													</span>
-
-													{/* Title */}
-													<Link href={`/products/${product.slug}`}>
-														<h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-[#1D70B8] transition-colors">
-															{product.name}
-														</h3>
-													</Link>
-
-													{/* Short description */}
-													{product.shortDesc && (
-														<p className="text-sm text-gray-500 mb-4 line-clamp-2">
-															{product.shortDesc}
-														</p>
-													)}
-
-													{/* Price & Cart */}
-													<div className="flex items-center justify-between pt-3 border-t border-gray-100">
-														<div>
-															<div className="flex items-baseline gap-2">
-																<span className="text-xl font-bold text-gray-900">
-																	{price.toLocaleString()} F
-																</span>
-																{originalPrice && (
-																	<span className="text-sm text-gray-400 line-through">
-																		{originalPrice.toLocaleString()} F
-																	</span>
-																)}
-															</div>
-															{product.stockQuantity <= 0 && (
-																<p className="text-xs text-red-500 font-medium mt-1">
-																	Rupture de stock
-																</p>
-															)}
-														</div>
-
-														<button
-															type="button"
-															onClick={() => handleAddToCart(product)}
-															disabled={product.stockQuantity <= 0}
-															className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all duration-200 ${
-																product.stockQuantity <= 0
-																	? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-																	: addedProductId === product.id
-																		? 'bg-green-500 text-white scale-110'
-																		: `bg-gradient-to-r ${style.gradient} text-white hover:shadow-lg hover:scale-105`
-															}`}
-														>
-															{addedProductId === product.id ? (
-																<Check size={20} />
-															) : (
-																<ShoppingCart size={20} />
-															)}
-														</button>
-													</div>
-												</div>
-											</div>
-										</div>
+										<ProductCard key={product.id} product={product} />
 									) : (
 										/* List View */
 										<div

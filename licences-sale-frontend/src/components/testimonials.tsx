@@ -1,78 +1,30 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { Star } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import type { Review } from '~/validators/reviews';
 
-type Review = {
-	name: string;
-	role: string;
-	location: string;
-	date: string;
-	rating: number;
-	comment: string;
-	photo: string;
+const initials = (name: string) =>
+	name
+		.trim()
+		.split(/\s+/)
+		.slice(0, 2)
+		.map((w) => w[0]?.toUpperCase() ?? '')
+		.join('');
+
+const formatDate = (iso: string) => {
+	try {
+		return new Intl.DateTimeFormat('fr-FR', {
+			day: 'numeric',
+			month: 'long',
+			year: 'numeric',
+		}).format(new Date(iso));
+	} catch {
+		return '';
+	}
 };
 
-const reviews: Review[] = [
-	{
-		name: 'Amadou Diallo',
-		role: 'CEO, TechSolutions',
-		location: 'Dakar',
-		date: '4 octobre 2026',
-		rating: 5,
-		comment: 'Service exceptionnel. Livraison instantanée par email.',
-		photo: 'https://i.pravatar.cc/200?img=68',
-	},
-	{
-		name: 'Fatou Camara',
-		role: 'Designer UI/UX',
-		location: 'Abidjan',
-		date: '4 août 2026',
-		rating: 5,
-		comment: 'Adobe Creative Cloud activé en moins de 10 minutes.',
-		photo: 'https://i.pravatar.cc/200?img=47',
-	},
-	{
-		name: 'Ibrahim Koné',
-		role: 'Admin Système',
-		location: 'Bamako',
-		date: '11 juin 2026',
-		rating: 5,
-		comment: 'Excellente plateforme pour acheter ses licences en Afrique.',
-		photo: 'https://i.pravatar.cc/200?img=12',
-	},
-	{
-		name: 'Aïcha Touré',
-		role: 'Comptable Senior',
-		location: 'Conakry',
-		date: '30 mars 2026',
-		rating: 5,
-		comment:
-			'Très bon service avec des prix vraiment compétitifs. Je recommande à tous mes collègues.',
-		photo: 'https://i.pravatar.cc/200?img=49',
-	},
-	{
-		name: 'Moussa Traoré',
-		role: 'Développeur Freelance',
-		location: 'Ouagadougou',
-		date: '12 février 2026',
-		rating: 5,
-		comment: 'Très bon support technique et équipe professionnelle.',
-		photo: 'https://i.pravatar.cc/200?img=33',
-	},
-	{
-		name: 'Aminata Bah',
-		role: 'Responsable IT',
-		location: 'Lomé',
-		date: '5 décembre 2025',
-		rating: 5,
-		comment:
-			'Plateforme formidable, expérience client au top. Recommandé pour tous les pros du logiciel.',
-		photo: 'https://i.pravatar.cc/200?img=44',
-	},
-];
-
-export const Testimonials = () => {
+export const Testimonials = ({ reviews }: { reviews: Review[] }) => {
 	const sectionRef = useRef<HTMLElement>(null);
 	const [inView, setInView] = useState(false);
 
@@ -125,35 +77,32 @@ export const Testimonials = () => {
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
 					{reviews.map((r, i) => (
 						<article
-							key={r.name}
+							key={r.id}
 							className={`relative bg-white rounded-2xl shadow-[0_10px_40px_-15px_rgba(15,42,71,0.18)] hover:shadow-[0_18px_50px_-15px_rgba(15,42,71,0.28)] transition-shadow duration-300 px-6 pt-8 pb-7 flex flex-col items-center text-center ${reveal(240 + i * 90).className}`}
 							style={reveal(240 + i * 90).style}
 						>
-							{/* Avatar */}
-							<img
-								src={r.photo}
-								alt={r.name}
-								loading="lazy"
-								width={64}
-								height={64}
-								className="w-16 h-16 rounded-full object-cover ring-4 ring-white shadow-md mb-4 bg-slate-200"
-							/>
+							{/* Avatar (initiales) */}
+							<div className="w-16 h-16 rounded-full ring-4 ring-white shadow-md mb-4 flex items-center justify-center bg-[#1D73B3]/10 text-[#1D73B3] font-bold text-lg">
+								{initials(r.authorName)}
+							</div>
 
 							{/* Name */}
 							<h3 className="text-[16px] font-bold text-[#1B3A5F] leading-tight">
-								{r.name}
+								{r.authorName}
 							</h3>
 
 							{/* Role · location */}
-							<p className="mt-1 text-[12px] text-slate-500">
-								{r.role} · {r.location}
-							</p>
+							{(r.authorRole || r.location) && (
+								<p className="mt-1 text-[12px] text-slate-500">
+									{[r.authorRole, r.location].filter(Boolean).join(' · ')}
+								</p>
+							)}
 
 							{/* Stars */}
 							<div className="mt-3 flex items-center gap-0.5">
 								{Array.from({ length: 5 }).map((_, s) => (
 									<Star
-										key={s}
+										key={`${r.id}-star-${s}`}
 										size={15}
 										className={
 											s < r.rating
@@ -165,7 +114,9 @@ export const Testimonials = () => {
 							</div>
 
 							{/* Date */}
-							<p className="mt-2 text-[11px] text-slate-400">{r.date}</p>
+							<p className="mt-2 text-[11px] text-slate-400">
+								{formatDate(r.createdAt)}
+							</p>
 
 							{/* Comment */}
 							<p className="mt-4 text-[13.5px] leading-relaxed text-slate-600">

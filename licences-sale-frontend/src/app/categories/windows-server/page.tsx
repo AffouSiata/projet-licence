@@ -1,26 +1,21 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
-import { toast } from 'sonner';
 import {
-	Server,
-	ChevronRight,
-	ShoppingCart,
-	Check,
-	Heart,
-	Package,
 	Award,
-	Users,
+	Check,
+	ChevronRight,
 	Headphones,
+	Package,
+	Server,
+	Users,
 	Zap,
 } from 'lucide-react';
-import { Header } from '~/components/header';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Footer } from '~/components/footer';
-import { useCart } from '~/components/cart-provider';
-import { useFavorites } from '~/components/favorites-provider';
+import { Header } from '~/components/header';
+import { ProductCard } from '~/components/product-card';
 import { getProducts } from '~/lib/products';
 import type { Product } from '~/validators/products';
 
@@ -65,7 +60,6 @@ const WindowsServerPage = () => {
 		const slug = searchParams.get('filter');
 		return CATEGORY.subcategories.find((s) => s.slug === slug)?.query ?? null;
 	});
-	const [addedProductId, setAddedProductId] = useState<string | null>(null);
 
 	useEffect(() => {
 		const slug = searchParams.get('filter');
@@ -73,15 +67,16 @@ const WindowsServerPage = () => {
 		setActiveQuery(match?.query ?? null);
 	}, [searchParams]);
 
-	const { addItem } = useCart();
-	const { isFavorite, toggleFavorite } = useFavorites();
-
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
 				setLoading(true);
 				const sortBy =
-					sort === 'name' ? 'name' : sort.startsWith('price') ? 'price' : 'createdAt';
+					sort === 'name'
+						? 'name'
+						: sort.startsWith('price')
+							? 'price'
+							: 'createdAt';
 				const order = sort === 'price-asc' || sort === 'name' ? 'asc' : 'desc';
 				const response = await getProducts({
 					q: activeQuery || CATEGORY.defaultQuery,
@@ -99,42 +94,6 @@ const WindowsServerPage = () => {
 		};
 		fetchData();
 	}, [sort, activeQuery]);
-
-	const stats = useMemo(() => {
-		if (products.length === 0) return { count: 0, minPrice: 0 };
-		const prices = products.map((p) =>
-			typeof p.price === 'string' ? Number.parseFloat(p.price) : p.price,
-		);
-		return { count: products.length, minPrice: Math.min(...prices) };
-	}, [products]);
-
-	const handleAddToCart = async (e: React.MouseEvent, product: Product) => {
-		e.preventDefault();
-		e.stopPropagation();
-		try {
-			await addItem(product.id, 1);
-			setAddedProductId(product.id);
-			setTimeout(() => setAddedProductId(null), 1500);
-		} catch (err) {
-			console.error('Error adding to cart:', err);
-		}
-	};
-
-	const handleToggleFavorite = (
-		e: React.MouseEvent,
-		productId: string,
-		productName: string,
-	) => {
-		e.preventDefault();
-		e.stopPropagation();
-		const wasInFavorites = isFavorite(productId);
-		toggleFavorite(productId);
-		toast.success(
-			wasInFavorites
-				? `${productName} retiré des favoris`
-				: `${productName} ajouté aux favoris`,
-		);
-	};
 
 	const Icon = CATEGORY.icon;
 
@@ -168,7 +127,10 @@ const WindowsServerPage = () => {
 
 					<div className="relative z-10 mx-auto max-w-7xl px-6 py-12 lg:px-8 lg:py-16">
 						<nav className="mb-8 flex items-center gap-2 text-[13px]">
-							<Link href="/" className="text-white/60 transition-colors hover:text-white">
+							<Link
+								href="/"
+								className="text-white/60 transition-colors hover:text-white"
+							>
 								Accueil
 							</Link>
 							<ChevronRight size={14} className="text-white/40" />
@@ -210,35 +172,6 @@ const WindowsServerPage = () => {
 										</div>
 									))}
 								</div>
-
-								<div className="mt-8 flex items-center gap-6 border-t border-white/15 pt-6">
-									<div>
-										<p className="text-2xl font-bold tabular-nums text-white lg:text-3xl">
-											{stats.count}
-										</p>
-										<p className="text-[11px] font-medium uppercase tracking-wider text-white/55">
-											Licences
-										</p>
-									</div>
-									<div className="h-10 w-px bg-white/15" />
-									<div>
-										<p className="text-2xl font-bold tabular-nums text-white lg:text-3xl">
-											{stats.minPrice > 0
-												? `${(stats.minPrice / 1000).toFixed(0)}K`
-												: '—'}
-										</p>
-										<p className="text-[11px] font-medium uppercase tracking-wider text-white/55">
-											FCFA min.
-										</p>
-									</div>
-									<div className="h-10 w-px bg-white/15" />
-									<div>
-										<p className="text-2xl font-bold text-white lg:text-3xl">24/7</p>
-										<p className="text-[11px] font-medium uppercase tracking-wider text-white/55">
-											Support
-										</p>
-									</div>
-								</div>
 							</div>
 
 							<div className="hidden lg:flex lg:justify-end">
@@ -276,7 +209,11 @@ const WindowsServerPage = () => {
 													? 'text-white shadow-md'
 													: 'bg-slate-100 text-slate-700 hover:bg-slate-200'
 											}`}
-											style={isActive ? { backgroundColor: CATEGORY.brand } : undefined}
+											style={
+												isActive
+													? { backgroundColor: CATEGORY.brand }
+													: undefined
+											}
 										>
 											{sub.name}
 										</button>
@@ -285,7 +222,9 @@ const WindowsServerPage = () => {
 							</div>
 
 							<div className="hidden items-center gap-3 md:flex">
-								<span className="text-[12px] font-medium text-slate-500">Trier :</span>
+								<span className="text-[12px] font-medium text-slate-500">
+									Trier :
+								</span>
 								<select
 									value={sort}
 									onChange={(e) => setSort(e.target.value as SortKey)}
@@ -348,155 +287,9 @@ const WindowsServerPage = () => {
 							</div>
 						) : products.length > 0 ? (
 							<div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 lg:gap-6">
-								{products.map((product) => {
-									const price =
-										typeof product.price === 'string'
-											? Number.parseFloat(product.price)
-											: product.price;
-									const discount = product.discount || 0;
-									const originalPrice =
-										discount > 0 ? Math.round(price / (1 - discount / 100)) : null;
-									const outOfStock = product.stockQuantity <= 0;
-									const lowStock =
-										product.stockQuantity > 0 && product.stockQuantity <= 5;
-									const wasAdded = addedProductId === product.id;
-									const fav = isFavorite(product.id);
-
-									return (
-										<div
-											key={product.id}
-											className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/60"
-										>
-											<Link
-												href={`/products/${product.slug}`}
-												className="relative block aspect-square overflow-hidden bg-slate-50"
-											>
-												<div className="absolute left-4 top-4 z-10 flex flex-col gap-1.5">
-													{discount > 0 && (
-														<span className="inline-flex items-center rounded-md bg-[#E63946] px-2.5 py-1 text-[11px] font-bold tabular-nums text-white">
-															−{discount}%
-														</span>
-													)}
-													{lowStock && (
-														<span className="inline-flex items-center rounded-md bg-amber-500/95 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
-															Stock limité
-														</span>
-													)}
-												</div>
-
-												<button
-													type="button"
-													onClick={(e) =>
-														handleToggleFavorite(e, product.id, product.name)
-													}
-													aria-label="Ajouter aux favoris"
-													className={`absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-200 ${
-														fav
-															? 'border-red-100 bg-red-50 text-red-500'
-															: 'border-slate-200 bg-white text-slate-400 hover:border-slate-300 hover:text-red-500'
-													}`}
-												>
-													<Heart
-														size={16}
-														className={fav ? 'fill-red-500' : ''}
-														strokeWidth={fav ? 2 : 1.75}
-													/>
-												</button>
-
-												{outOfStock && (
-													<div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-[2px]">
-														<span className="rounded bg-[#1B3A5F] px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-white">
-															Rupture de stock
-														</span>
-													</div>
-												)}
-
-												<div className="absolute inset-0 flex items-center justify-center p-8 lg:p-10">
-													{product.image ? (
-														<div className="relative h-full w-full transition-transform duration-700 ease-out group-hover:scale-105">
-															<Image
-																src={product.image}
-																alt={product.name}
-																fill
-																className="object-contain drop-shadow-md"
-																sizes="(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 25vw"
-															/>
-														</div>
-													) : (
-														<Package size={56} className="text-slate-300" />
-													)}
-												</div>
-											</Link>
-
-											<div className="flex flex-1 flex-col p-5 lg:p-6">
-												<span
-													className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em]"
-													style={{ color: CATEGORY.brand }}
-												>
-													{product.category?.name || CATEGORY.name}
-												</span>
-
-												<Link href={`/products/${product.slug}`} className="group/title">
-													<h3 className="mb-2 line-clamp-2 text-[15px] font-semibold leading-snug text-[#1B3A5F] transition-colors group-hover/title:text-[#1D73B3] lg:text-base">
-														{product.name}
-													</h3>
-												</Link>
-
-												{product.shortDesc && (
-													<p className="mb-5 line-clamp-2 text-[13px] leading-relaxed text-slate-500">
-														{product.shortDesc}
-													</p>
-												)}
-
-												<div className="flex-1" />
-
-												<div className="mb-4 flex items-baseline gap-2">
-													<span className="text-xl font-bold tabular-nums text-[#1B3A5F] lg:text-[22px]">
-														{price.toLocaleString('fr-FR')}
-														<span className="ml-1 text-sm font-semibold text-slate-500">F</span>
-													</span>
-													{originalPrice && (
-														<span className="text-[13px] tabular-nums text-slate-400 line-through">
-															{originalPrice.toLocaleString('fr-FR')} F
-														</span>
-													)}
-												</div>
-
-												<button
-													type="button"
-													onClick={(e) => handleAddToCart(e, product)}
-													disabled={outOfStock}
-													className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl text-[13px] font-semibold transition-all duration-300 ${
-														outOfStock
-															? 'cursor-not-allowed bg-slate-100 text-slate-400'
-															: wasAdded
-																? 'bg-emerald-500 text-white'
-																: 'text-white hover:opacity-90'
-													}`}
-													style={
-														!outOfStock && !wasAdded
-															? { backgroundColor: CATEGORY.brand }
-															: undefined
-													}
-												>
-													{wasAdded ? (
-														<>
-															<Check size={16} />
-															<span>Ajouté</span>
-														</>
-													) : outOfStock ? (
-														<span>Indisponible</span>
-													) : (
-														<>
-															<ShoppingCart size={16} />
-															<span>Ajouter au panier</span>
-														</>
-													)}
-												</button>
-											</div>
-										</div>
-									);
-								})}
+								{products.map((product) => (
+									<ProductCard key={product.id} product={product} />
+								))}
 							</div>
 						) : (
 							<div className="rounded-2xl border border-slate-200 bg-white py-20 text-center">

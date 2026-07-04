@@ -1,12 +1,15 @@
-import { getCategories, getFeaturedProducts } from '~/lib/products';
-import { Header } from '~/components/header';
-import { HeroSlider } from '~/components/hero-slider';
+import { Advantages } from '~/components/advantages';
 import { CategoriesGrid } from '~/components/categories-grid';
 import { FeaturedProducts } from '~/components/featured-products';
-import { Advantages } from '~/components/advantages';
-import { Testimonials } from '~/components/testimonials';
-import { NewsletterCTA } from '~/components/newsletter-cta';
 import { Footer } from '~/components/footer';
+import { Header } from '~/components/header';
+import { HeroSlider } from '~/components/hero-slider';
+import { NewsletterCTA } from '~/components/newsletter-cta';
+import { Testimonials } from '~/components/testimonials';
+import { TrustSection } from '~/components/trust-section';
+import { getCategories, getFeaturedProducts } from '~/lib/products';
+import { getReviews } from '~/lib/reviews';
+import type { Review } from '~/validators/reviews';
 
 export const revalidate = 60;
 
@@ -16,14 +19,17 @@ export default async function HomePage() {
 	let featuredProducts: Awaited<
 		ReturnType<typeof getFeaturedProducts>
 	>['items'] = [];
+	let reviews: Review[] = [];
 
 	try {
-		const [categoriesData, productsData] = await Promise.all([
+		const [categoriesData, productsData, reviewsData] = await Promise.all([
 			getCategories(),
 			getFeaturedProducts(8),
+			getReviews({ limit: 6 }).catch(() => []),
 		]);
 		categories = categoriesData.items || [];
 		featuredProducts = productsData.items || [];
+		reviews = reviewsData;
 	} catch (error) {
 		console.error('Error loading homepage data:', error);
 	}
@@ -35,7 +41,11 @@ export default async function HomePage() {
 			<CategoriesGrid categories={categories} />
 			<FeaturedProducts products={featuredProducts} />
 			<Advantages />
-			<Testimonials />
+			{reviews.length > 0 ? (
+				<Testimonials reviews={reviews} />
+			) : (
+				<TrustSection />
+			)}
 			<NewsletterCTA />
 			<Footer />
 		</main>

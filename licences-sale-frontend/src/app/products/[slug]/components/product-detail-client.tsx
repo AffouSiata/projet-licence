@@ -26,6 +26,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCart } from '~/components/cart-provider';
 import { useFavorites } from '~/components/favorites-provider';
+import { getProductImage, ProductCard } from '~/components/product-card';
 import type { Product } from '~/validators/products';
 
 interface ProductDetailClientProps {
@@ -71,7 +72,9 @@ export default function ProductDetailClient({
 	const { addItem } = useCart();
 	const { isFavorite, toggleFavorite } = useFavorites();
 	const [quantity, setQuantity] = useState(1);
-	const [selectedImage, setSelectedImage] = useState(product.image);
+	const [selectedImage, setSelectedImage] = useState(
+		getProductImage(product) ?? product.image,
+	);
 	const [isAddingToCart, setIsAddingToCart] = useState(false);
 	const [justAdded, setJustAdded] = useState(false);
 	const [activeTab, setActiveTab] = useState<TabKey>('description');
@@ -87,7 +90,15 @@ export default function ProductDetailClient({
 	const inStock = product.stockQuantity > 0;
 	const lowStock = inStock && product.stockQuantity <= 5;
 
-	const allImages = [product.image, ...(product.images || [])].filter(Boolean);
+	const allImages = [
+		...new Set(
+			[
+				getProductImage(product),
+				product.image,
+				...(product.images || []),
+			].filter(Boolean),
+		),
+	];
 
 	const handleAddToCart = async () => {
 		setIsAddingToCart(true);
@@ -571,64 +582,9 @@ export default function ProductDetailClient({
 						</div>
 
 						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
-							{relatedProducts.map((rp) => {
-								const rpPrice =
-									typeof rp.price === 'string'
-										? Number.parseFloat(rp.price)
-										: rp.price;
-								const rpOriginal =
-									rp.discount > 0 ? rpPrice / (1 - rp.discount / 100) : null;
-								return (
-									<Link
-										key={rp.id}
-										href={`/products/${rp.slug}`}
-										className="group relative flex flex-col bg-white rounded-2xl ring-1 ring-slate-200 overflow-hidden transition-all duration-300 hover:ring-slate-300 hover:shadow-[0_18px_50px_-25px_rgba(15,42,71,0.25)]"
-									>
-										<div className="relative aspect-square bg-slate-50 overflow-hidden">
-											{rp.discount > 0 && (
-												<span className="absolute top-4 left-4 z-10 inline-flex items-center px-2.5 py-1 bg-[#E63946] text-white text-[11px] font-bold rounded-md tabular-nums">
-													−{rp.discount}%
-												</span>
-											)}
-											<div className="absolute inset-0 flex items-center justify-center p-8">
-												{rp.image ? (
-													<div className="relative w-full h-full transition-transform duration-500 group-hover:scale-105">
-														<Image
-															src={rp.image}
-															alt={rp.name}
-															fill
-															className="object-contain drop-shadow-md"
-															sizes="(max-width: 768px) 100vw, 33vw"
-														/>
-													</div>
-												) : (
-													<Package size={48} className="text-slate-300" />
-												)}
-											</div>
-										</div>
-										<div className="p-5 flex flex-col flex-1">
-											{rp.category && (
-												<span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 mb-1.5">
-													{rp.category.name}
-												</span>
-											)}
-											<h3 className="text-[15px] font-semibold text-[#1B3A5F] leading-snug line-clamp-2 group-hover:text-[#1D73B3] transition-colors">
-												{rp.name}
-											</h3>
-											<div className="mt-auto pt-4 flex items-baseline gap-2">
-												<span className="text-lg font-bold text-[#1B3A5F] tabular-nums">
-													{formatPrice(rpPrice)}
-												</span>
-												{rpOriginal && (
-													<span className="text-[12px] text-slate-400 line-through tabular-nums">
-														{formatPrice(rpOriginal)}
-													</span>
-												)}
-											</div>
-										</div>
-									</Link>
-								);
-							})}
+							{relatedProducts.map((rp) => (
+								<ProductCard key={rp.id} product={rp} />
+							))}
 						</div>
 					</div>
 				</section>

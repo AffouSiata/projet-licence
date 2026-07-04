@@ -41,3 +41,8 @@ djidja@gmail.com => email
 
 
 email: licence@admin.com , mpd : LicenceAdmin33
+
+1. change la monnaie et la langue en fonction de ce qui choisir par le client, 
+
+la page /licences existe si oui pourquoi
+pourquoi quand je clique sur commander sur la page detail d'un produit rien ne s'affiche
